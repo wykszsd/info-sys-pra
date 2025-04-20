@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>upload</title>
+    <style>
+        /* 基础重置与字体设置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: '微软雅黑', 'Segoe UI', sans-serif;
+        }
+
+        /* 主体背景与布局 */
+        body {
+            background: linear-gradient(135deg, #f0f5ff 0%, #e6f0ff 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 登录容器 */
+        .login-container {
+            background: rgba(255,255,255,0.95);
+            padding: 2.5rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0,80,200,0.15);
+            width: 440px;
+            border: 1px solid rgba(0,80,200,0.1);
+        }
+
+        /* 系统标题区 */
+        .system-title {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            position: relative;
+        }
+        .system-title h1 {
+            color: #1a4b8e;
+            font-size: 2.2rem;
+            margin-bottom: 0.8rem;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .system-title::after {
+            content: '';
+            display: block;
+            width: 50px;
+            height: 3px;
+            background: #1a4b8e;
+            margin: 1rem auto;
+            border-radius: 2px;
+        }
+
+        /* 身份切换按钮 */
+        .role-switch {
+            display: flex;
+            margin-bottom: 2rem;
+            background: #f8f9ff;
+            border-radius: 8px;
+            padding: 4px;
+        }
+        .role-btn {
+            flex: 1;
+            padding: 1.2rem;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 1.1rem;
+            color: #666;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 6px;
+        }
+        .role-btn.active {
+            background: #1a4b8e;
+            color: white;
+            box-shadow: 0 3px 10px rgba(26,75,142,0.3);
+        }
+
+        /* 表单元素 */
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .form-group label {
+            color: #444;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .form-group input {
+            padding: 1rem;
+            border: 1px solid #e0e4ec;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        .form-group input:focus {
+            border-color: #1a4b8e;
+            box-shadow: 0 0 0 3px rgba(26,75,142,0.1);
+        }
+
+        .assist-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 1rem 0;
+        }
+        .remember-group {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .remember-group label {
+            color: #666;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .forgot-password a {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .forgot-password a:hover {
+            color: #1a4b8e;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #1a4b8e 0%, #2a5ba8 100%);
+            color: white;
+            padding: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(26,75,142,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(26,75,142,0.4);
+        }
+        .submit-btn::after {
+            content: "→";
+            position: absolute;
+            right: 1.5rem;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+        .submit-btn:hover::after {
+            opacity: 1;
+            right: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <!-- 系统标题 -->
+        <div class="system-title">
+            <h1>智慧选课系统</h1>
+            <p>IECS</p>
+        </div>
+        
+        <!-- 身份切换 -->
+        <div class="role-switch">
+            <button class="role-btn active">学生端</button>
+            <button class="role-btn">教工端</button>
+        </div>
+
+        <!-- 登录表单 -->
+        <form class="login-form">
+            <div class="form-group">
+                <label for="username">学号/工号</label>
+                <input type="text" id="username" placeholder="请输入您的身份账号">
+            </div>
+
+            <div class="form-group">
+                <label for="password">登录密码</label>
+                <input type="password" id="password" placeholder="请输入登录密码">
+            </div>
+
+            <!-- 辅助功能 -->
+            <div class="assist-area">
+                <div class="remember-group">
+                    <input type="checkbox" id="remember">
+                    <label for="remember">记住密码</label>
+                    <input type="checkbox" id="auto-login">
+                    <label for="auto-login">自动登录</label>
+                </div>
+                <div class="forgot-password">
+                    <a href="#">忘记密码？</a>
+                </div>
+            </div>
+
+            <!-- 增强登录按钮 -->
+            <button type="submit" class="submit-btn">登录系统</button>
+        </form>
+    </div>
+</body>
+</html>

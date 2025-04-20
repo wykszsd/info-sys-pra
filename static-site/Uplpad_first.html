@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生选课系统 - 登录</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .login-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            width: 400px;
+        }
+
+        .role-switch {
+            display: flex;
+            margin-bottom: 1.5rem;
+        }
+
+        .role-btn {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            background: #eee;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .role-btn.active {
+            background: #2196F3;
+            color: white;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .form-group input {
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: 2px solid #2196F3;
+            border-color: transparent;
+        }
+
+        .forgot-password {
+            text-align: right;
+        }
+
+        .forgot-password a {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .submit-btn {
+            background: #2196F3;
+            color: white;
+            padding: 1rem;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #1976D2;
+        }
+
+        .system-title {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .system-title h1 {
+            color: #1a237e;
+            margin-bottom: 0.5rem;
+        }
+
+        .system-title p {
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="system-title">
+            <h1>学生选课系统</h1>
+            <p>IECS</p>
+        </div>
+        
+        <div class="role-switch">
+            <button class="role-btn active">学生端</button>
+            <button class="role-btn">教工端</button>
+        </div>
+
+        <form class="login-form">
+            <div class="form-group">
+                <label for="username">学号</label>
+                <input type="text" id="username" placeholder="请输入学号">
+            </div>
+
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" placeholder="请输入密码">
+            </div>
+
+            <div class="forgot-password">
+                <a href="#">忘记密码？</a>
+            </div>
+
+            <button type="submit" class="submit-btn">立即登录</button>
+        </form>
+    </div>
+</body>
+</html>
