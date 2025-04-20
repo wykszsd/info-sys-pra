@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教师课表查询系统</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .week-navigation {
+            display: flex;
+            align-items: center;
+        }
+        .week-navigation button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+        .week-navigation button:hover {
+            background-color: #45a049;
+        }
+        .week-display {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .teacher-info {
+            display: flex;
+            align-items: center;
+        }
+        .teacher-info img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        .timetable {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .timetable th, .timetable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        .timetable th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .timetable-time-col {
+            width: 100px;
+            background-color: #f9f9f9;
+        }
+        .course-cell {
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .course-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+            font-size: 14px;
+        }
+        .class-info {
+            font-size: 12px;
+            color: #555;
+        }
+        .location {
+            font-size: 12px;
+            color: #2196F3;
+            margin-top: 2px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>教师课表查询系统</h1>
+            <div class="teacher-info">
+                <img src="https://via.placeholder.com/40" alt="教师头像" id="teacher-avatar">
+                <div>
+                    <div id="teacher-name">加载中...</div>
+                    <div id="teacher-department" style="font-size: 12px; color: #666;">加载中...</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="week-navigation">
+            <button id="prev-week">上一周</button>
+            <div class="week-display" id="week-display">2023年 第12周 (3月20日-3月26日)</div>
+            <button id="next-week">下一周</button>
+        </div>
+
+        <div id="timetable-container">
+            <table class="timetable">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>星期一</th>
+                        <th>星期二</th>
+                        <th>星期三</th>
+                        <th>星期四</th>
+                        <th>星期五</th>
+                        <th>星期六</th>
+                        <th>星期日</th>
+                    </tr>
+                </thead>
+                <tbody id="timetable-body">
+                    <!-- 课表内容将通过JavaScript动态加载 -->
+                    <tr>
+                        <td colspan="8" class="loading">加载课表中...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // 当前显示的周数（0表示当前周，-1表示上一周，1表示下一周，以此类推）
+        let currentWeekOffset = 0;
+        // 教师ID（实际应用中应从登录信息获取）
+        const teacherId = 'T1001';
+        
+        // 定义11节课的时间段
+        const timeSlots = [
+            { time: "08:00-08:45", period: 1 },
+            { time: "08:55-09:40", period: 2 },
+            { time: "10:10-10:55", period: 3 },
+            { time: "11:05-11:50", period: 4 },
+            { time: "14:00-14:45", period: 5 },
+            { time: "14:55-15:40", period: 6 },
+            { time: "16:10-16:55", period: 7 },
+            { time: "17:05-17:50", period: 8 },
+            { time: "19:00-19:45", period: 9 },
+            { time: "19:55-20:40", period: 10 },
+            { time: "20:50-21:35", period: 11 }
+        ];
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取教师信息
+            fetchTeacherInfo(teacherId);
+            
+            // 加载当前周的课表
+            loadTimetable(teacherId, currentWeekOffset);
+            
+            // 绑定周导航按钮事件
+            document.getElementById('prev-week').addEventListener('click', function() {
+                currentWeekOffset--;
+                loadTimetable(teacherId, currentWeekOffset);
+            });
+            
+            document.getElementById('next-week').addEventListener('click', function() {
+                currentWeekOffset++;
+                loadTimetable(teacherId, currentWeekOffset);
+            });
+        });
+        
+        /**
+         * 获取教师信息
+         * @param {string} teacherId 教师ID
+         */
+        function fetchTeacherInfo(teacherId) {
+            // 这里是模拟数据，实际应用中应该从后端API获取
+            // 接口设计：GET /api/teachers/{teacherId}
+            // 返回示例：
+            /* {
+                "id": "T1001",
+                "name": "张老师",
+                "department": "计算机科学系",
+                "avatar": "/path/to/avatar.jpg"
+            } */
+            
+            // 模拟API请求
+            setTimeout(() => {
+                const mockData = {
+                    id: teacherId,
+                    name: "张老师",
+                    department: "计算机科学系",
+                    avatar: "https://via.placeholder.com/40"
+                };
+                
+                // 更新UI
+                document.getElementById('teacher-name').textContent = mockData.name;
+                document.getElementById('teacher-department').textContent = mockData.department;
+                document.getElementById('teacher-avatar').src = mockData.avatar;
+            }, 500);
+        }
+        
+        /**
+         * 加载课表数据
+         * @param {string} teacherId 教师ID
+         * @param {number} weekOffset 周偏移量
+         */
+        function loadTimetable(teacherId, weekOffset) {
+            // 显示加载状态
+            const timetableBody = document.getElementById('timetable-body');
+            timetableBody.innerHTML = '<tr><td colspan="8" class="loading">加载课表中...</td></tr>';
+            
+            // 更新周显示
+            updateWeekDisplay(weekOffset);
+            
+            // 这里是模拟数据，实际应用中应该从后端API获取
+            // 接口设计：GET /api/timetable?teacherId={teacherId}&weekOffset={weekOffset}
+            // 返回示例：
+            /* {
+                "weekInfo": "2023年 第12周 (3月20日-3月26日)",
+                "timeSlots": [
+                    {
+                        "time": "08:00-08:45",
+                        "period": 1,
+                        "courses": [
+                            { "day": 1, "name": "数据结构", "class": "计算机2101", "location": "A201" },
+                            // 其他天的课程...
+                        ]
+                    },
+                    // 其他时间段...
+                ]
+            } */
+            
+            // 模拟API请求
+            setTimeout(() => {
+                const mockData = generateMockTimetable(teacherId, weekOffset);
+                
+                // 渲染课表
+                renderTimetable(mockData);
+            }, 800);
+        }
+        
+        /**
+         * 更新周显示
+         * @param {number} weekOffset 周偏移量
+         */
+        function updateWeekDisplay(weekOffset) {
+            // 这里应该根据weekOffset计算实际的周信息
+            // 实际应用中可以从后端返回的周信息获取
+            
+            const now = new Date();
+            const currentWeek = getWeekNumber(now);
+            
+            // 计算目标周的日期范围
+            const targetDate = new Date(now);
+            targetDate.setDate(now.getDate() + weekOffset * 7);
+            const targetWeek = currentWeek + weekOffset;
+            
+            // 计算周的起始日期（周一）
+            const startDate = new Date(targetDate);
+            startDate.setDate(targetDate.getDate() - ((targetDate.getDay() + 6) % 7));
+            
+            // 计算周的结束日期（周日）
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+            
+            // 格式化日期显示
+            const weekDisplay = `${startDate.getFullYear()}年 第${targetWeek}周 (${formatDate(startDate)}-${formatDate(endDate)})`;
+            document.getElementById('week-display').textContent = weekDisplay;
+        }
+        
+        /**
+         * 格式化日期为MM月DD日
+         * @param {Date} date 日期对象
+         * @return {string} 格式化后的日期字符串
+         */
+        function formatDate(date) {
+            return `${date.getMonth() + 1}月${date.getDate()}日`;
+        }
+        
+        /**
+         * 获取一年中的第几周
+         * @param {Date} date 日期对象
+         * @return {number} 周数
+         */
+        function getWeekNumber(date) {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        }
+        
+        /**
+         * 生成模拟课表数据（模拟从数据库查询一周的完整课表）
+         * @param {string} teacherId 教师ID
+         * @param {number} weekOffset 周偏移量
+         * @return {object} 模拟的课表数据
+         */
+         function generateMockTimetable(teacherId, weekOffset) {
+        // 模拟从数据库查询的一周完整课表数据
+        // 课程将合理地分布在一周的不同天
+        
+        return {
+            weekInfo: `${new Date().getFullYear()}年 第${getWeekNumber(new Date()) + weekOffset}周`,
+            timeSlots: [
+                // 第1节 08:00-08:45
+                {
+                    time: "08:00-08:45",
+                    period: 1,
+                    courses: [
+                        { day: 1, name: "数据结构", class: "计算机2101", location: "A201" }, // 周一
+                        { day: 3, name: "操作系统", class: "计算机2102", location: "B305" }, // 周三
+                        { day: 5, name: "数据库原理", class: "计算机2103", location: "C102" }  // 周五
+                    ]
+                },
+                // 第2节 08:55-09:40
+                {
+                    time: "08:55-09:40",
+                    period: 2,
+                    courses: [
+                        { day: 2, name: "算法设计", class: "计算机2101", location: "D201" }, // 周二
+                        { day: 4, name: "软件工程", class: "计算机2102", location: "E305" }   // 周四
+                    ]
+                },
+                // 第3节 10:10-10:55
+                {
+                    time: "10:10-10:55",
+                    period: 3,
+                    courses: [
+                        { day: 1, name: "计算机网络", class: "计算机2103", location: "F102" }, // 周一
+                        { day: 5, name: "编译原理", class: "计算机2101", location: "A105" }     // 周五
+                    ]
+                },
+                // 第4节 11:05-11:50
+                {
+                    time: "11:05-11:50",
+                    period: 4,
+                    courses: [
+                        { day: 3, name: "人工智能", class: "计算机2102", location: "B205" } // 周三
+                    ]
+                },
+                // 第5节 14:00-14:45
+                {
+                    time: "14:00-14:45",
+                    period: 5,
+                    courses: [
+                        { day: 2, name: "机器学习", class: "计算机2103", location: "C301" }, // 周二
+                        { day: 4, name: "计算机图形学", class: "计算机2101", location: "D105" } // 周四
+                    ]
+                },
+                // 第6节 14:55-15:40
+                {
+                    time: "14:55-15:40",
+                    period: 6,
+                    courses: [
+                        { day: 1, name: "软件测试", class: "计算机2102", location: "E201" }, // 周一
+                        { day: 3, name: "大数据分析", class: "计算机2103", location: "F305" } // 周三
+                    ]
+                },
+                // 第7节 16:10-16:55
+                {
+                    time: "16:10-16:55",
+                    period: 7,
+                    courses: [
+                        { day: 5, name: "Web开发", class: "计算机2101", location: "A202" } // 周五
+                    ]
+                },
+                // 第8节 17:05-17:50
+                {
+                    time: "17:05-17:50",
+                    period: 8,
+                    courses: [
+                        { day: 2, name: "移动开发", class: "计算机2102", location: "B302" } // 周二
+                    ]
+                },
+                // 第9节 19:00-19:45
+                {
+                    time: "19:00-19:45",
+                    period: 9,
+                    courses: [
+                        { day: 4, name: "云计算", class: "计算机2103", location: "C103" } // 周四
+                    ]
+                },
+                // 第10节 19:55-20:40
+                {
+                    time: "19:55-20:40",
+                    period: 10,
+                    courses: [
+                        { day: 1, name: "信息安全", class: "计算机2101", location: "D203" }, // 周一
+                        { day: 3, name: "物联网技术", class: "计算机2102", location: "E305" } // 周三
+                    ]
+                },
+                // 第11节 20:50-21:35
+                {
+                    time: "20:50-21:35",
+                    period: 11,
+                    courses: [
+                        { day: 5, name: "分布式系统", class: "计算机2103", location: "F105" } // 周五
+                    ]
+                }
+            ]
+        };
+    }
+        
+        /**
+         * 渲染课表
+         * @param {object} timetableData 课表数据
+         */
+         function renderTimetable(timetableData) {
+    if (!timetableData || !Array.isArray(timetableData.timeSlots)) {
+        console.error('Invalid timetable data:', timetableData);
+        return;
+    }
+
+    const timetableBody = document.getElementById('timetable-body');
+    timetableBody.innerHTML = '';
+
+    // 遍历每个时间段（直接使用数据中的 timeSlots）
+    timetableData.timeSlots.forEach(slot => {
+        const row = document.createElement('tr');
+        
+        // 添加时间列
+        const timeCell = document.createElement('td');
+        timeCell.className = 'timetable-time-col';
+        timeCell.textContent = slot.time; // 使用实际时间，如 "08:00-08:45"
+        row.appendChild(timeCell);
+
+        // 添加7天的课程单元格
+        for (let day = 1; day <= 7; day++) {
+            const cell = document.createElement('td');
+            cell.className = 'course-cell';
+            
+            // 查找当前天的课程
+            const course = slot.courses.find(c => c.day === day);
+
+            if (course) {
+                cell.innerHTML = `
+                    <div class="course-name">${course.name}</div>
+                    <div class="class-info">${course.class}</div>
+                    <div class="location">${course.location}</div>
+                `;
+            }
+            row.appendChild(cell);
+        }
+        timetableBody.appendChild(row);
+    });
+}
+
+    </script>
+</body>
+</html>
