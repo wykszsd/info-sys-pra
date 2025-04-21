@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧选课系统-个人信息</title>
+    <style>
+        /* 设置默认样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: '微软雅黑', 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        /*信息*/
+        .profile-box {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(26,75,142,0.08);
+        }
+
+        /*区域*/
+        .informationrmation-part {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .informationrmation-part:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        /*标题*/
+        .section-title {
+            color: #1a4b8e;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
+            padding-left: 1rem;
+            border-left: 4px solid #1a4b8e;
+        }
+        .information-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            align-items: center;
+            padding: 0.8rem 1rem;
+            margin-bottom: 0.5rem;
+            background: #f8f9ff;
+            border-radius: 8px;
+        }
+
+        .information-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .information-content {
+            color: #333;
+            font-weight: 400;
+        }
+
+        .highlight-information {
+            color: #1a4b8e;
+            font-weight: 600;
+        }
+
+        .contact-information .information-row {
+            position: relative;
+            padding-left: 2.5rem;
+        }
+        .contact-information .information-row::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            background-size: contain;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="profile-box">
+        <!-- 基本信息 -->
+        <div class="informationrmation-part">
+            <h2 class="section-title">基本信息</h2>
+            <div class="information-row">
+                <span class="information-label">学号</span>
+                <span class="information-content highlight-information">************</span>
+            </div>
+            <div class="information-row">
+                <span class="information-label">姓名</span>
+                <span class="information-content">***</span>
+            </div>
+            <div class="information-row">
+                <span class="information-label">性别</span>
+                <span class="information-content">男/女</span>
+            </div>
+            <div class="information-row">
+                <span class="information-label">出生日期</span>
+                <span class="information-content">****-**-**</span>
+            </div>
+        </div>
+
+        <!-- 教育信息 -->
+        <div class="informationrmation-part">
+            <h2 class="section-title">教育信息</h2>
+            <div class="information-row">
+                <span class="information-label">学院</span>
+                <span class="information-content">计算机学院</span>
+            </div>
+            <div class="information-row">
+                <span class="information-label">专业</span>
+                <span class="information-content">计算机科学与技术</span>
+            </div>
+            <div class="information-row">
+                <span class="information-label">年级</span>
+                <span class="information-content">****级</span>
+            </div>
+            <div class="information-row">
+                <span class="information-label">入学时间</span>
+                <span class="information-content">****-**-**</span>
+            </div>
+        </div>
+
+        <!-- 联系信息 -->
+        <div class="informationrmation-part contact-information">
+            <h2 class="section-title">联系信息</h2>
+            <div class="information-row phone">
+                <span class="information-label">联系电话</span>
+                <span class="information-content">***-****-****</span>
+            </div>
+            <div class="information-row email">
+                <span class="information-label">电子邮箱</span>
+                <span class="information-content">email</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
