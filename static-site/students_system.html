@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧选课通 - 学生端</title>
+    <style>
+        /*综合视觉优化*/
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 6px 20px rgba(26,75,142,0.08);
+            border: 1px solid rgba(0,80,200,0.05);
+        }
+
+        /*日历课表美化*/
+        .schedule-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1.2rem;
+            margin-top: 1.5rem;
+        }
+        .calendar-day {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 1.2rem;
+            min-height: 160px;
+            transition: transform 0.2s;
+        }
+        .calendar-day:hover {
+            transform: translateY(-3px);
+        }
+        .course-item {
+            background: rgba(26,75,142,0.05);
+            padding: 0.8rem;
+            border-radius: 6px;
+            margin: 0.5rem 0;
+        }
+
+        /*选课模块*/
+        .course-selection {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        .course-list {
+            display: grid;
+            gap: 1.5rem;
+        }
+        .course-card {
+            display: flex;
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+        .course-info {
+            flex: 1;
+        }
+        .course-action {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.8rem;
+        }
+        .select-btn {
+            background: #1a4b8e;
+            color: white;
+            padding: 0.6rem 1.5rem;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .selected-course {
+            background: #f8f9ff;
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+
+        /*统一查询*/
+        .query-filters {
+            display: flex;
+            gap: 1.2rem;
+            align-items: center;
+            background: #f8f9ff;
+            padding: 1rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+        .query-filters select, 
+        .query-filters input {
+            padding: 0.8rem 1.2rem;
+            border: 1px solid #e0e4ec;
+            border-radius: 8px;
+            background: white;
+            min-width: 180px;
+            transition: all 0.3s;
+        }
+        .query-filters select:focus, 
+        .query-filters input:focus {
+            border-color: #1a4b8e;
+            box-shadow: 0 0 0 3px rgba(26,75,142,0.1);
+        }
+
+        h3 {
+            color: #1a4b8e;
+            margin-bottom: 1.5rem;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        h3::before {
+            content: '';
+            width: 4px;
+            height: 1.4rem;
+            background: #1a4b8e;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body>
+    <main class="main-content">
+        <!--综合选课-->
+        <div class="card">
+            <h3> 课程选择</h3>
+            <div class="course-selection">
+                <!--可课程列-->
+                <div class="course-list">
+                    <div class="course-card">
+                        <div class="course-info">
+                            <h4>高等数学 (3学分)</h4>
+                            <p>王老师 · 周四 10:00-12:00 · 逸夫楼203</p>
+                            <p>剩余名额：15/60</p>
+                        </div>
+                        <div class="course-action">
+                            <button class="select-btn">选课</button>
+                            <progress value="25" max="100"></progress>
+                        </div>
+                    </div>
+                    <!--其他课程-->
+                </div>
+
+                <!--已选课程-->
+                <div class="selected-course">
+                    <h4>已选课程 (2/6)</h4>
+                    <div class="selected-list">
+                        <div class="selected-item">
+                            <span>数据结构</span>
+                            <button class="cancel-btn">退选</button>
+                        </div>
+                        <!--其他-->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--日历课表-->
+        <div class="card">
+            <div class="query-header">
+                <h3> 我的课表</h3>
+                <div class="week-switcher">
+                    <button class="week-btn">← 上周</button>
+                    <span>第12教学周</span>
+                    <button class="week-btn">下周 →</button>
+                </div>
+            </div>
+            <div class="schedule-calendar">
+                <div class="calendar-day">
+                    <h4>周一 11/20</h4>
+                    <div class="course-item">
+                        <p> 高等数学<br> 08:00-09:40<br> 逸夫楼302</p>
+                    </div>
+                </div>
+                <!--其他日期-->
+            </div>
+        </div>
+
+    
+        <div class="card">
+            <div class="query-header">
+                <h3> 教室查询</h3>
+                <div class="query-filters">
+                    <select>
+                        <option>全部教学楼</option>
+                        <option>逸夫楼</option>
+                    </select>
+                    <input type="date" placeholder="开始日期">
+                    <input type="date" placeholder="结束日期">
+                </div>
+            </div>
+            <!--教室列表-->
+        </div>
+    </main>
+</body>
+</html>
