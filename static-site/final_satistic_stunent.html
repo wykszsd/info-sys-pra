@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧选课通 - 学生端</title>
+    <style>
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: '微软雅黑', 'Segoe UI', sans-serif;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: #1a4b8e;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+        .nav-header {
+            color: white;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .nav-item {
+            color: rgba(255,255,255,0.9);
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .nav-item.active {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .main-content {
+            background: #f5f7fa;
+            padding: 2rem 3rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 6px 20px rgba(26,75,142,0.08);
+            border: 1px solid rgba(0,80,200,0.05);
+        }
+
+        .header {
+            background: #1a4b8e;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .profile-link {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+        .profile-link:hover {
+            opacity: 0.9;
+        }
+
+       
+        .schedule-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1.2rem;
+            margin-top: 1.5rem;
+        }
+        .calendar-day {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 1.2rem;
+            min-height: 160px;
+        }
+
+       
+        .course-selection {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        .select-btn {
+            background: #1a4b8e;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边导航 -->
+        <nav class="sidebar">
+            <div class="nav-header">
+                <h3>智慧选课通</h3>
+                <p>学生端系统</p>
+            </div>
+            <div class="nav-list">
+                <a href="#timetable" class="nav-item active"> 我的课表</a>
+                <a href="#course-select" class="nav-item"> 课程选择</a>
+                <a href="#classroom" class="nav-item"> 教室查询</a>
+                <a href="#exam" class="nav-item"> 考试安排</a>
+                <a href="#score" class="nav-item"> 成绩查询</a>
+                <a href="#settings" class="nav-item"> 个人设置</a>
+            </div>
+        </nav>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部导航 -->
+            <header class="header">
+                <h2>智慧选课通学生端</h2>
+                <div class="user-info">
+                    <a href="profile.html" class="profile-link">
+                        <span>***同学 | 20**********</span>
+                    </a>
+                    <button class="logout-btn">退出登录</button>
+                </div>
+            </header>
+
+            <!-- 课表模块 -->
+            <section id="timetable" class="card">
+                <h3> 本周课表</h3>
+                <div class="schedule-calendar">
+                   
+                </div>
+            </section>
+
+            <!-- 选课模块 -->
+            <section id="course-select" class="card">
+                <div class="course-selection">
+                    <h3> 选课内容</h3>
+                </div>
+            </section>
+
+            <!-- 教室查询 -->
+            <section id="classroom" class="card">
+                <h3> 教室状态查询</h3>
+              
+            </section>
+
+            <!-- 考试安排 -->
+            <section id="exam" class="card">
+                <h3> 近期考试</h3>
+              
+            </section>
+
+            <!-- 成绩查询 -->
+            <section id="score" class="card">
+                <h3> 学业成绩</h3>
+               
+            </section>
+
+            <!-- 个人设置 -->
+            <section id="settings" class="card">
+                <h3> 个人设置</h3>
+               
+            </section>
+        </main>
+    </div>
+   
+</body>
+
+</html>

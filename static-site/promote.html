@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧选课通 - 学生端</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: '微软雅黑', 'Segoe UI', sans-serif;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: #1a4b8e;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+        .nav-header {
+            color: white;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .nav-item {
+            color: rgba(255,255,255,0.9);
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .nav-item.active {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .main-content {
+            background: #f5f7fa;
+            padding: 2rem 3rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 6px 20px rgba(26,75,142,0.08);
+            border: 1px solid rgba(0,80,200,0.05);
+        }
+
+        .header {
+            background: #1a4b8e;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+        .profile-link {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+        .profile-link:hover {
+            opacity: 0.9;
+        }
+
+       
+        .schedule-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1.2rem;
+            margin-top: 1.5rem;
+        }
+        .calendar-day {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 1.2rem;
+            min-height: 160px;
+        }
+
+       
+        .course-selection {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+        .select-btn {
+            background: #1a4b8e;
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                padding: 1rem;
+            }
+        }
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .content-section.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .course-card {
+            background: white;
+            border-left: 4px solid #1a4b8e;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .available { background: #4CAF50; }
+        .occupied { background: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边导航 -->
+        <nav class="sidebar">
+            <div class="nav-list">
+                <a href="#timetable" class="nav-item active"> 我的课表</a>
+                <a href="#course-select" class="nav-item"> 课程选择</a>
+                <a href="#classroom" class="nav-item"> 教室查询</a>
+                <a href="#exam" class="nav-item"> 考试安排</a>
+                <a href="#score" class="nav-item"> 成绩查询</a>
+                <a href="#settings" class="nav-item"> 个人设置</a>
+            </div>
+        </nav>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <header class="header">
+                <h2>智慧选课通学生端</h2>
+                <div class="user-info">
+                    <a href="profile.html" class="profile-link">
+                        <span>***同学 | 计算机学院20**级</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- 课表模块 -->
+            <section id="timetable" class="card content-section active">
+                <div class="week-switcher">
+                    <button class="week-btn">← 上周</button>
+                    <span>2023-2024学年 第12教学周</span>
+                    <button class="week-btn">下周 →</button>
+                </div>
+                <div class="schedule-calendar">
+                    <div class="calendar-day">
+                        <h4>周一 11/20</h4>
+                        <div class="course-item">
+                            <p> 高等数学<br> 08:00-09:40<br> 逸夫楼302</p>
+                        </div>
+                    </div>
+                    <!-- 其他日期课程 -->
+                </div>
+            </section>
+
+            <!-- 选课模块 -->
+            <section id="course-select" class="card content-section">
+                <div class="course-selection">
+                    <div class="course-list">
+                        <div class="course-card">
+                            <div class="course-info">
+                                <h4>机器学习基础（3学分）</h4>
+                                <p>王教授 · 周四 10:10-11:50</p>
+                                <p>逸夫楼一阶</p>
+                                <p>剩余名额：15/60</p>
+                            </div>
+                            <button class="select-btn">选课</button>
+                        </div>
+                        <!-- 更多课程 -->
+                    </div>
+                    <div class="selected-course">
+                        <h4>已选课程（2/6）</h4>
+                        <div class="selected-item">
+                            <span>数据结构</span>
+                            <button class="cancel-btn">退选</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 教室查询 -->
+            <section id="classroom" class="card content-section">
+                <div class="classroom-filter">
+                    <select>
+                        <option>逸夫楼</option>
+                        <option>计算中心</option>
+                        <option>第三教学楼</option>
+                        <option>兴湘一教</option>
+                    </select>
+                    <input type="time" value="14:00">
+                </div>
+                <div class="classroom-list">
+                    <div class="classroom-item">
+                        <span class="status-dot available"></span>
+                        <h4>逸夫楼201</h4>
+                        <p>容量：80人 · 当前状态：空闲</p>
+                    </div>
+                    <!-- 更多教室 -->
+                </div>
+            </section>
+
+            <!-- 考试安排 -->
+            <section id="exam" class="card content-section">
+                <div class="exam-timeline">
+                    <div class="exam-item">
+                        <div class="exam-date">12月25日</div>
+                        <div class="exam-info">
+                            <h4>线性代数期末考试</h4>
+                            <p> 09:00-11:00 ·  逸夫楼501</p>
+                        </div>
+                    </div>
+                    <!-- 更多考试 -->
+                </div>
+            </section>
+
+            <!-- 成绩查询 -->
+            <section id="score" class="card content-section">
+                <table class="score-table">
+                    <thead>
+                        <tr>
+                            <th>课程名称</th>
+                            <th>学分</th>
+                            <th>成绩</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>大学物理</td>
+                            <td>3.0</td>
+                            <td class="highlight">85</td>
+                        </tr>
+                        <!-- 更多成绩 -->
+                    </tbody>
+                </table>
+                <div class="gpa-summary">
+                    当前GPA：3.67 · 已获学分：48/150
+                </div>
+            </section>
+
+            <!-- 个人设置 -->
+            <section id="settings" class="card content-section">
+                <div class="setting-item">
+                    <h4> 联系方式</h4>
+                    <input type="tel" value="***-1234-5678">
+                </div>
+                <div class="setting-item">
+                    <h4> 界面主题</h4>
+                    <select>
+                        <option>默认主题</option>
+                        <option>深色模式</option>
+                        <option>其他</option>
+                    </select>
+                </div>
+            </section>
+        </main>
+    </div>
+
+</body>
+</html>
