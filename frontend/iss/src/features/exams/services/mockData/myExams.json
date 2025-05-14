@@ -1,0 +1,95 @@
+[
+    {
+        "examId": 1001,
+        "courseId": 1,
+        "courseName": "计算机导论",
+        "courseCode": "CS101",
+        "examType": "final",
+        "examDate": "2024-06-25",
+        "sectionId": 5,
+        "startTime": "14:00:00",
+        "endTime": "16:00:00",
+        "duration": 120,
+        "classroomId": 10,
+        "building": "综合楼D",
+        "roomNumber": "D401",
+        "invigilators": [
+            {
+                "teacherId": "T9876",
+                "name": "张三丰",
+                "role": "main"
+            },
+            {
+                "teacherId": "T0001",
+                "name": "周芷若",
+                "role": "assistant"
+            }
+        ]
+    },
+    {
+        "examId": 1002,
+        "courseId": 2,
+        "courseName": "数据结构",
+        "courseCode": "CS201",
+        "examType": "final",
+        "examDate": "2024-06-28",
+        "sectionId": 1,
+        "startTime": "08:00:00",
+        "endTime": "10:00:00",
+        "duration": 120,
+        "classroomId": 11,
+        "building": "综合楼D",
+        "roomNumber": "D402",
+        "invigilators": [
+            {
+                "teacherId": "T1234",
+                "name": "李莫愁",
+                "role": "main"
+            }
+        ]
+    },
+    {
+        "examId": 1003,
+        "courseId": 4,
+        "courseName": "线性代数",
+        "courseCode": "MA101",
+        "examType": "midterm",
+        "examDate": "2024-04-20",
+        "sectionId": 3,
+        "startTime": "10:00:00",
+        "endTime": "11:30:00",
+        "duration": 90,
+        "classroomId": 2,
+        "building": "教学楼A",
+        "roomNumber": "A102",
+        "invigilators": [
+            {
+                "teacherId": "T1111",
+                "name": "赵敏",
+                "role": "main"
+            }
+        ]
+    },
+    {
+        "examId": 1004,
+        "courseId": 1,
+        "courseName": "计算机导论",
+        "courseCode": "CS101",
+        "examType": "makeup",
+        "examDate": "2024-07-05",
+        "sectionId": 7,
+        "startTime": "16:00:00",
+        "endTime": "17:30:00",
+        "duration": 90,
+        "classroomId": 1,
+        "building": "教学楼A",
+        "roomNumber": "A101",
+        "invigilators": [
+            {
+                "teacherId": "T9876",
+                "name": "张三丰",
+                "role": "main"
+            }
+        ]
+    }
+]
