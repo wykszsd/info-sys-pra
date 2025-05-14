@@ -1,0 +1,27 @@
+[
+    {
+        "courseId": 1,
+        "courseName": "计算机导论",
+        "courseCode": "CS101"
+    },
+    {
+        "courseId": 2,
+        "courseName": "数据结构",
+        "courseCode": "CS201"
+    },
+    {
+        "courseId": 3,
+        "courseName": "操作系统原理",
+        "courseCode": "CS301"
+    },
+    {
+        "courseId": 4,
+        "courseName": "线性代数",
+        "courseCode": "MA101"
+    },
+    {
+        "courseId": 5,
+        "courseName": "大学物理I",
+        "courseCode": "PH101"
+    }
+]

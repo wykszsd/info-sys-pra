@@ -1,0 +1,32 @@
+[
+    {
+        "classroomId": 1,
+        "building": "教学楼A",
+        "roomNumber": "A101",
+        "capacity": 50
+    },
+    {
+        "classroomId": 2,
+        "building": "教学楼A",
+        "roomNumber": "A102",
+        "capacity": 60
+    },
+    {
+        "classroomId": 3,
+        "building": "教学楼B",
+        "roomNumber": "B201",
+        "capacity": 40
+    },
+    {
+        "classroomId": 4,
+        "building": "实验楼C",
+        "roomNumber": "C303 Lab",
+        "capacity": 30
+    },
+    {
+        "classroomId": 5,
+        "building": "综合楼D",
+        "roomNumber": "D405",
+        "capacity": 100
+    }
+]
