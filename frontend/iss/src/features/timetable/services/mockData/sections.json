@@ -1,0 +1,86 @@
+[
+    {
+        "sectionId": 1,
+        "startTime": "08:00:00",
+        "endTime": "08:45:00",
+        "periodType": "morning",
+        "campus": "主校区"
+    },
+    {
+        "sectionId": 2,
+        "startTime": "08:55:00",
+        "endTime": "09:40:00",
+        "periodType": "morning",
+        "campus": "主校区"
+    },
+    {
+        "sectionId": 3,
+        "startTime": "10:00:00",
+        "endTime": "10:45:00",
+        "periodType": "morning",
+        "campus": "主校区"
+    },
+    {
+        "sectionId": 4,
+        "startTime": "10:55:00",
+        "endTime": "11:40:00",
+        "periodType": "morning",
+        "campus": "主校区"
+    },
+    {
+        "sectionId": 5,
+        "startTime": "14:00:00",
+        "endTime": "14:45:00",
+        "periodType": "afternoon",
+        "campus": "主校区"
+    },
+    {
+        "sectionId": 6,
+        "startTime": "14:55:00",
+        "endTime": "15:40:00",
+        "periodType": "afternoon",
+        "campus": "主校区"
+    },
+    {
+        "sectionId": 7,
+        "startTime": "16:00:00",
+        "endTime": "16:45:00",
+        "periodType": "afternoon",
+        "campus": "主校区"
+    },
+    {
+        "sectionId": 8,
+        "startTime": "16:55:00",
+        "endTime": "17:40:00",
+        "periodType": "afternoon",
+        "campus": "主校区"
+    },
+    {
+        "sectionId": 9,
+        "startTime": "19:00:00",
+        "endTime": "19:45:00",
+        "periodType": "evening",
+        "campus": "主校区"
+    },
+    {
+        "sectionId": 10,
+        "startTime": "19:55:00",
+        "endTime": "20:40:00",
+        "periodType": "evening",
+        "campus": "主校区"
+    },
+    {
+        "sectionId": 11,
+        "startTime": "20:50:00",
+        "endTime": "21:35:00",
+        "periodType": "evening",
+        "campus": "主校区"
+    },
+    {
+        "sectionId": 12,
+        "startTime": "21:45:00",
+        "endTime": "22:30:00",
+        "periodType": "evening",
+        "campus": "主校区"
+    }
+]

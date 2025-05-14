@@ -1,0 +1,38 @@
+[
+    {
+        "scheduleId": 201,
+        "courseId": 4,
+        "teacherId": "T1111",
+        "classroomId": 3,
+        "sectionId": 3,
+        "weekDay": 4,
+        "weeks": "2-10",
+        "courseName": "线性代数 (模拟)",
+        "courseCode": "MA101",
+        "teacherName": "赵老师",
+        "building": "教学楼C",
+        "roomNumber": "303",
+        "startTime": "10:00:00",
+        "endTime": "10:45:00",
+        "credit": 3,
+        "maxCapacity": 60
+    },
+    {
+        "scheduleId": 201,
+        "courseId": 4,
+        "teacherId": "T1111",
+        "classroomId": 3,
+        "sectionId": 4,
+        "weekDay": 4,
+        "weeks": "2-10",
+        "courseName": "线性代数 (模拟)",
+        "courseCode": "MA101",
+        "teacherName": "赵老师",
+        "building": "教学楼C",
+        "roomNumber": "303",
+        "startTime": "10:55:00",
+        "endTime": "11:40:00",
+        "credit": 3,
+        "maxCapacity": 60
+    }
+]
