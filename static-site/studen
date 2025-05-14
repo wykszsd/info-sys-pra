@@ -1,0 +1,59 @@
+{
+    "teachers": [
+      {
+        "teacher_id": "T1001",
+        "name": "王老师",
+        "department": "计算机学院",
+        "title": "副教授",
+        "teaching_courses": ["C101", "C203"]
+      },
+      {
+        "teacher_id": "T1002",
+        "name": "陈教授",
+        "department": "数学学院",
+        "title": "教授",
+        "teaching_courses": ["M201"]
+      }
+    ],
+    
+    "course_schedules": [
+      {
+        "course_id": "C101",
+        "course_name": "数据结构与算法",
+        "semester": "2023秋季学期",
+        "class_times": [
+          {
+            "weekday": 1,
+            "start_time": "10:00",
+            "end_time": "12:00",
+            "classroom": "逸夫楼301"
+          }
+        ],
+        "student_list": ["S2023001", "S2023002"],
+        "office_hours": "周二 14:00-16:00"
+      }
+    ],
+    
+    "course_materials": [
+      {
+        "course_id": "C101",
+        "materials": [
+          {
+            "title": "算法导论课件",
+            "type": "PPT",
+            "upload_time": "2023-09-05T09:00:00Z"
+          }
+        ]
+      }
+    ],
+    
+    "student_performance": [
+      {
+        "course_id": "C101",
+        "student_id": "S2023001",
+        "attendance": "95%",
+        "homework_scores": [85, 90, 88],
+        "final_exam_score": 88
+      }
+    ]
+  }
