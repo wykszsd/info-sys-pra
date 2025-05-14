@@ -1,0 +1,22 @@
+[
+    {
+        "teacherId": "T9876",
+        "name": "张三丰",
+        "department": "计算机科学与技术学院"
+    },
+    {
+        "teacherId": "T1234",
+        "name": "李莫愁",
+        "department": "计算机科学与技术学院"
+    },
+    {
+        "teacherId": "T1111",
+        "name": "赵敏",
+        "department": "数学系"
+    },
+    {
+        "teacherId": "T2222",
+        "name": "周芷若",
+        "department": "物理学院"
+    }
+]
