@@ -1,0 +1,38 @@
+[
+    {
+        "notificationId": 1,
+        "userId": 2,
+        "title": "调课通知: CS101",
+        "content": "原定周一1-2节的CS101计算机导论，因故调至周三3-4节，地点不变。请注意查看。",
+        "notifyTime": "2024-03-10T09:00:00Z",
+        "type": "schedule_change",
+        "isRead": false
+    },
+    {
+        "notificationId": 2,
+        "userId": 2,
+        "title": "考试安排: CS101 期末",
+        "content": "CS101 计算机导论期末考试安排在 2024-06-25 14:00-16:00，地点：综合楼D 401。",
+        "notifyTime": "2024-05-20T15:30:00Z",
+        "type": "exam",
+        "isRead": true
+    },
+    {
+        "notificationId": 3,
+        "userId": 2,
+        "title": "作业提醒: CS201 第5章",
+        "content": "数据结构第五章课后习题请于下周三前提交。",
+        "notifyTime": "2024-04-15T11:00:00Z",
+        "type": "assignment",
+        "isRead": false
+    },
+    {
+        "notificationId": 4,
+        "userId": 3,
+        "title": "您的调课申请已批准",
+        "content": "您申请的 CS101 调课已批准，新时间为周三3-4节。",
+        "notifyTime": "2024-03-12T14:00:00Z",
+        "type": "system",
+        "isRead": false
+    }
+]
