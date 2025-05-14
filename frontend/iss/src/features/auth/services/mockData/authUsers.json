@@ -1,0 +1,43 @@
+[
+    {
+        "userId": 1,
+        "username": "admin",
+        "mockPassword": "password",
+        "role": "admin",
+        "email": "admin@example.com",
+        "phone": "13800000001"
+    },
+    {
+        "userId": 2,
+        "username": "S12345",
+        "mockPassword": "password",
+        "role": "student",
+        "studentId": "S12345",
+        "email": "s12345@example.com",
+        "phone": "13800000002",
+        "class_name": "计算机科学2021级1班",
+        "enrollment_year": 2021
+    },
+    {
+        "userId": 3,
+        "username": "T9876",
+        "mockPassword": "password",
+        "role": "teacher",
+        "teacherId": "T9876",
+        "email": "t9876@example.com",
+        "phone": "13800000003",
+        "department": "计算机科学与技术学院",
+        "title": "教授"
+    },
+    {
+        "userId": 4,
+        "username": "S67890",
+        "mockPassword": "password",
+        "role": "student",
+        "studentId": "S67890",
+        "email": "s67890@example.com",
+        "phone": "13800000004",
+        "class_name": "软件工程2022级实验班",
+        "enrollment_year": 2022
+    }
+]

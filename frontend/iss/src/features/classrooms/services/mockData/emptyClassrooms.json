@@ -1,0 +1,65 @@
+[
+    {
+        "classroomId": 1,
+        "building": "教学楼A",
+        "roomNumber": "A101",
+        "capacity": 120,
+        "equipment": "multimedia"
+    },
+    {
+        "classroomId": 2,
+        "building": "教学楼A",
+        "roomNumber": "A102",
+        "capacity": 80,
+        "equipment": "multimedia"
+    },
+    {
+        "classroomId": 3,
+        "building": "教学楼A",
+        "roomNumber": "A205",
+        "capacity": 60,
+        "equipment": "basic"
+    },
+    {
+        "classroomId": 10,
+        "building": "教学楼B",
+        "roomNumber": "B101",
+        "capacity": 150,
+        "equipment": "multimedia"
+    },
+    {
+        "classroomId": 11,
+        "building": "教学楼B",
+        "roomNumber": "B304",
+        "capacity": 70,
+        "equipment": "multimedia"
+    },
+    {
+        "classroomId": 21,
+        "building": "实验楼C",
+        "roomNumber": "C101 Lab",
+        "capacity": 40,
+        "equipment": "lab"
+    },
+    {
+        "classroomId": 22,
+        "building": "实验楼C",
+        "roomNumber": "C203 CompLab",
+        "capacity": 50,
+        "equipment": "multimedia"
+    },
+    {
+        "classroomId": 31,
+        "building": "综合楼D",
+        "roomNumber": "D401",
+        "capacity": 200,
+        "equipment": "multimedia"
+    },
+    {
+        "classroomId": 32,
+        "building": "综合楼D",
+        "roomNumber": "D402",
+        "capacity": 200,
+        "equipment": "multimedia"
+    }
+]
