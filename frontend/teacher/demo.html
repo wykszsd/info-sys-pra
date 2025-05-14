@@ -3,458 +3,599 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>教师课表查询系统</title>
+    <title>智慧选课通 - 教师端</title>
     <style>
-        body {
-            font-family: 'Microsoft YaHei', sans-serif;
+        /* 基础样式（与学生端一致） */
+        * {
             margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: '微软雅黑', 'Segoe UI', sans-serif;
         }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background-color: white;
+
+        body {
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: #1a4b8e;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+        .nav-header {
+            color: white;
+            padding: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .nav-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .nav-item {
+            color: rgba(255,255,255,0.9);
+            padding: 1rem;
             border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+            text-decoration: none;
         }
+        .nav-item:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        .nav-item.active {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .main-content {
+            background: #f5f7fa;
+            padding: 2rem 3rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 6px 20px rgba(26,75,142,0.08);
+            border: 1px solid rgba(0,80,200,0.05);
+        }
+
         .header {
+            background: #1a4b8e;
+            color: white;
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #eee;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .week-navigation {
+        .user-info {
             display: flex;
             align-items: center;
+            gap: 1.5rem;
         }
-        .week-navigation button {
-            background-color: #4CAF50;
+        .profile-link {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+        .profile-link:hover {
+            opacity: 0.9;
+        }
+
+        /* 教师课表特有样式 */
+        .week-switcher {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .week-btn {
+            background: #1a4b8e;
             color: white;
             border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
+            padding: 0.6rem 1.2rem;
+            border-radius: 25px;
             cursor: pointer;
-            margin: 0 10px;
+            transition: all 0.3s;
         }
-        .week-navigation button:hover {
-            background-color: #45a049;
+        .week-btn:hover {
+            background: #143b74;
+        }
+        .week-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
         }
         .week-display {
-            font-size: 18px;
-            font-weight: bold;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #333;
         }
-        .teacher-info {
-            display: flex;
-            align-items: center;
-        }
-        .teacher-info img {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            margin-right: 10px;
-        }
+
         .timetable {
             width: 100%;
             border-collapse: collapse;
+            margin-top: 1.5rem;
         }
         .timetable th, .timetable td {
-            border: 1px solid #ddd;
-            padding: 8px;
+            border: 1px solid #e2e8f0;
+            padding: 0.8rem;
             text-align: center;
         }
         .timetable th {
-            background-color: #f2f2f2;
-            font-weight: bold;
+            background-color: #f8f9ff;
+            font-weight: 600;
+            color: #1a4b8e;
         }
         .timetable-time-col {
             width: 100px;
-            background-color: #f9f9f9;
+            background-color: #f8f9ff;
+            font-weight: 500;
+            color: #1a4b8e;
+        }
+
+        .course-cell {
+            vertical-align: top;
+            text-align: left;
+            padding: 0.8rem;
         }
         .course-name {
-            font-weight: bold;
-            margin-bottom: 3px;
-            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            font-size: 0.95rem;
+            color: #333;
         }
         .class-info {
-            font-size: 12px;
-            color: #555;
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 0.3rem;
         }
         .location {
-            font-size: 12px;
-            color: #2196F3;
-            margin-top: 2px;
+            font-size: 0.85rem;
+            color: #1a4b8e;
+            font-weight: 500;
         }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #777;
+        .empty-cell {
+            background-color: #f8f9ff;
+        }
+
+        /* 教师信息卡片 */
+        .teacher-card {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+            margin-bottom: 2rem;
+        }
+        .teacher-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #1a4b8e;
+        }
+        .teacher-details {
+            flex: 1;
+        }
+        .teacher-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1a4b8e;
+            margin-bottom: 0.5rem;
+        }
+        .teacher-department {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        .teacher-id {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .app-container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                padding: 1rem;
+            }
+            .timetable {
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>教师课表查询系统</h1>
-            <div class="teacher-info">
-                <img src="https://via.placeholder.com/40" alt="教师头像" id="teacher-avatar">
-                <div>
-                    <div id="teacher-name">加载中...</div>
-                    <div id="teacher-department" style="font-size: 12px; color: #666;">加载中...</div>
+    <div class="app-container">
+        <!-- 侧边导航 -->
+        <nav class="sidebar">
+            <div class="nav-header">
+                <h3>教师工作台</h3>
+            </div>
+            <div class="nav-list">
+                <a href="#timetable" class="nav-item active"> 我的课表</a>
+                <a href="#teaching" class="nav-item"> 教学任务</a>
+                <a href="#students" class="nav-item"> 学生名单</a>
+                <a href="#grades" class="nav-item"> 成绩录入</a>
+                <a href="#settings" class="nav-item"> 个人设置</a>
+            </div>
+        </nav>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <header class="header">
+                <h2>智慧选课通教师端</h2>
+                <div class="user-info">
+                    <a href="profile.html" class="profile-link">
+                        <span>张教授 | 计算机学院</span>
+                    </a>
+                </div>
+            </header>
+
+            <!-- 教师信息卡片 -->
+            <div class="teacher-card">
+                <img class="teacher-avatar" src="https://via.placeholder.com/80" alt="教师头像">
+                <div class="teacher-details">
+                    <div class="teacher-name">张教授</div>
+                    <div class="teacher-department">计算机科学与技术系 · 教授</div>
+                    <div class="teacher-id">工号: T1001</div>
                 </div>
             </div>
-        </div>
 
-        <div class="week-navigation">
-            <button id="prev-week">上一周</button>
-            <div class="week-display" id="week-display">2023年 第12周 (3月20日-3月26日)</div>
-            <button id="next-week">下一周</button>
-        </div>
+            <!-- 课表模块 -->
+            <section id="timetable" class="card content-section active">
+                <div class="week-switcher">
+                    <button class="week-btn" id="prev-week">← 上一周</button>
+                    <span class="week-display" id="week-display">2025年 第1周</span>
+                    <button class="week-btn" id="next-week">下一周 →</button>
+                </div>
+                <div id="timetable-container">
+                    <table class="timetable">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>星期一</th>
+                                <th>星期二</th>
+                                <th>星期三</th>
+                                <th>星期四</th>
+                                <th>星期五</th>
+                                <th>星期六</th>
+                                <th>星期日</th>
+                            </tr>
+                        </thead>
+                        <tbody id="timetable-body">
+                            <!-- 第1节课 -->
+                            <tr>
+                                <td class="timetable-time-col">08:00-08:45</td>
+                                <td class="course-cell" id="mon-1"></td>
+                                <td class="course-cell" id="tue-1"></td>
+                                <td class="course-cell" id="wed-1"></td>
+                                <td class="course-cell" id="thu-1"></td>
+                                <td class="course-cell" id="fri-1"></td>
+                                <td class="course-cell" id="sat-1"></td>
+                                <td class="course-cell" id="sun-1"></td>
+                            </tr>
+                            <!-- 第2节课 -->
+                            <tr>
+                                <td class="timetable-time-col">08:55-09:40</td>
+                                <td class="course-cell" id="mon-2"></td>
+                                <td class="course-cell" id="tue-2"></td>
+                                <td class="course-cell" id="wed-2"></td>
+                                <td class="course-cell" id="thu-2"></td>
+                                <td class="course-cell" id="fri-2"></td>
+                                <td class="course-cell" id="sat-2"></td>
+                                <td class="course-cell" id="sun-2"></td>
+                            </tr>
+                            <!-- 第3节课 -->
+                            <tr>
+                                <td class="timetable-time-col">10:10-10:55</td>
+                                <td class="course-cell" id="mon-3"></td>
+                                <td class="course-cell" id="tue-3"></td>
+                                <td class="course-cell" id="wed-3"></td>
+                                <td class="course-cell" id="thu-3"></td>
+                                <td class="course-cell" id="fri-3"></td>
+                                <td class="course-cell" id="sat-3"></td>
+                                <td class="course-cell" id="sun-3"></td>
+                            </tr>
+                            <!-- 第4节课 -->
+                            <tr>
+                                <td class="timetable-time-col">11:05-11:50</td>
+                                <td class="course-cell" id="mon-4"></td>
+                                <td class="course-cell" id="tue-4"></td>
+                                <td class="course-cell" id="wed-4"></td>
+                                <td class="course-cell" id="thu-4"></td>
+                                <td class="course-cell" id="fri-4"></td>
+                                <td class="course-cell" id="sat-4"></td>
+                                <td class="course-cell" id="sun-4"></td>
+                            </tr>
+                            <!-- 第5节课 -->
+                            <tr>
+                                <td class="timetable-time-col">14:00-14:45</td>
+                                <td class="course-cell" id="mon-5"></td>
+                                <td class="course-cell" id="tue-5"></td>
+                                <td class="course-cell" id="wed-5"></td>
+                                <td class="course-cell" id="thu-5"></td>
+                                <td class="course-cell" id="fri-5"></td>
+                                <td class="course-cell" id="sat-5"></td>
+                                <td class="course-cell" id="sun-5"></td>
+                            </tr>
+                            <!-- 第6节课 -->
+                            <tr>
+                                <td class="timetable-time-col">14:55-15:40</td>
+                                <td class="course-cell" id="mon-6"></td>
+                                <td class="course-cell" id="tue-6"></td>
+                                <td class="course-cell" id="wed-6"></td>
+                                <td class="course-cell" id="thu-6"></td>
+                                <td class="course-cell" id="fri-6"></td>
+                                <td class="course-cell" id="sat-6"></td>
+                                <td class="course-cell" id="sun-6"></td>
+                            </tr>
+                            <!-- 第7节课 -->
+                            <tr>
+                                <td class="timetable-time-col">16:10-16:55</td>
+                                <td class="course-cell" id="mon-7"></td>
+                                <td class="course-cell" id="tue-7"></td>
+                                <td class="course-cell" id="wed-7"></td>
+                                <td class="course-cell" id="thu-7"></td>
+                                <td class="course-cell" id="fri-7"></td>
+                                <td class="course-cell" id="sat-7"></td>
+                                <td class="course-cell" id="sun-7"></td>
+                            </tr>
+                            <!-- 第8节课 -->
+                            <tr>
+                                <td class="timetable-time-col">17:05-17:50</td>
+                                <td class="course-cell" id="mon-8"></td>
+                                <td class="course-cell" id="tue-8"></td>
+                                <td class="course-cell" id="wed-8"></td>
+                                <td class="course-cell" id="thu-8"></td>
+                                <td class="course-cell" id="fri-8"></td>
+                                <td class="course-cell" id="sat-8"></td>
+                                <td class="course-cell" id="sun-8"></td>
+                            </tr>
+                            <!-- 第9节课 -->
+                            <tr>
+                                <td class="timetable-time-col">19:00-19:45</td>
+                                <td class="course-cell" id="mon-9"></td>
+                                <td class="course-cell" id="tue-9"></td>
+                                <td class="course-cell" id="wed-9"></td>
+                                <td class="course-cell" id="thu-9"></td>
+                                <td class="course-cell" id="fri-9"></td>
+                                <td class="course-cell" id="sat-9"></td>
+                                <td class="course-cell" id="sun-9"></td>
+                            </tr>
+                            <!-- 第10节课 -->
+                            <tr>
+                                <td class="timetable-time-col">19:55-20:40</td>
+                                <td class="course-cell" id="mon-10"></td>
+                                <td class="course-cell" id="tue-10"></td>
+                                <td class="course-cell" id="wed-10"></td>
+                                <td class="course-cell" id="thu-10"></td>
+                                <td class="course-cell" id="fri-10"></td>
+                                <td class="course-cell" id="sat-10"></td>
+                                <td class="course-cell" id="sun-10"></td>
+                            </tr>
+                            <!-- 第11节课 -->
+                            <tr>
+                                <td class="timetable-time-col">20:50-21:35</td>
+                                <td class="course-cell" id="mon-11"></td>
+                                <td class="course-cell" id="tue-11"></td>
+                                <td class="course-cell" id="wed-11"></td>
+                                <td class="course-cell" id="thu-11"></td>
+                                <td class="course-cell" id="fri-11"></td>
+                                <td class="course-cell" id="sat-11"></td>
+                                <td class="course-cell" id="sun-11"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-        <div id="timetable-container">
-            <table class="timetable">
-                <thead>
-                    <tr>
-                        <th>时间</th>
-                        <th>星期一</th>
-                        <th>星期二</th>
-                        <th>星期三</th>
-                        <th>星期四</th>
-                        <th>星期五</th>
-                        <th>星期六</th>
-                        <th>星期日</th>
-                    </tr>
-                </thead>
-                <tbody id="timetable-body">
-                    <!-- 课表内容将通过JavaScript动态加载 -->
-                    <tr>
-                        <td colspan="8" class="loading">加载课表中...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+            <!-- 其他模块（占位） -->
+            <section id="teaching" class="card content-section">
+                <h3>教学任务</h3>
+                <p>本学期教学任务将显示在这里</p>
+            </section>
+            <section id="students" class="card content-section">
+                <h3>学生名单</h3>
+                <p>课程学生名单将显示在这里</p>
+            </section>
+            <section id="grades" class="card content-section">
+                <h3>成绩录入</h3>
+                <p>学生成绩录入界面将显示在这里</p>
+            </section>
+            <section id="settings" class="card content-section">
+                <h3>个人设置</h3>
+                <p>个人信息设置界面将显示在这里</p>
+            </section>
+        </main>
     </div>
-
     <script>
-        // 当前显示的周数（0表示当前周，-1表示上一周，1表示下一周，以此类推）
-        let currentWeekOffset = 0;
-        // 教师ID（实际应用中应从登录信息获取）
-        const teacherId = 'T1001';
-        
-        // 定义11节课的时间段
-        const timeSlots = [
-            { time: "08:00-08:45", period: 1 },
-            { time: "08:55-09:40", period: 2 },
-            { time: "10:10-10:55", period: 3 },
-            { time: "11:05-11:50", period: 4 },
-            { time: "14:00-14:45", period: 5 },
-            { time: "14:55-15:40", period: 6 },
-            { time: "16:10-16:55", period: 7 },
-            { time: "17:05-17:50", period: 8 },
-            { time: "19:00-19:45", period: 9 },
-            { time: "19:55-20:40", period: 10 },
-            { time: "20:50-21:35", period: 11 }
-        ];
-        
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            // 获取教师信息
-            fetchTeacherInfo(teacherId);
+        document.addEventListener('DOMContentLoaded', () => {
+            // 导航切换逻辑
+            const sections = {
+                'timetable': document.getElementById('timetable'),
+                'teaching': document.getElementById('teaching'),
+                'students': document.getElementById('students'),
+                'grades': document.getElementById('grades'),
+                'settings': document.getElementById('settings')
+            };
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const target = item.getAttribute('href').substring(1);
+                    Object.values(sections).forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    document.querySelectorAll('.nav-item').forEach(nav => {
+                        nav.classList.remove('active');
+                    });
+                    sections[target].classList.add('active');
+                    item.classList.add('active');
+                });
+            });
+            sections.timetable.classList.add('active');
+
+            // 课表周切换逻辑
+            let currentWeek = 1;
+            const MIN_WEEK = 1;
+            const MAX_WEEK = 20;
+            const teacherId = 'T1001';
             
             // 加载当前周的课表
-            loadTimetable(teacherId, currentWeekOffset);
+            loadTimetable(teacherId, currentWeek);
             
             // 绑定周导航按钮事件
             document.getElementById('prev-week').addEventListener('click', function() {
-                currentWeekOffset--;
-                loadTimetable(teacherId, currentWeekOffset);
+                if (currentWeek > MIN_WEEK) {
+                    currentWeek--;
+                    loadTimetable(teacherId, currentWeek);
+                    updateNavigationButtons();
+                }
             });
             
             document.getElementById('next-week').addEventListener('click', function() {
-                currentWeekOffset++;
-                loadTimetable(teacherId, currentWeekOffset);
-            });
-        });
-        
-        /**
-         * 获取教师信息
-         * @param {string} teacherId 教师ID
-         */
-        function fetchTeacherInfo(teacherId) {
-            // 这里是模拟数据，实际应用中应该从后端API获取
-            // 接口设计：GET /api/teachers/{teacherId}
-            // 返回示例：
-            /* {
-                "id": "T1001",
-                "name": "张老师",
-                "department": "计算机科学系",
-                "avatar": "/path/to/avatar.jpg"
-            } */
-            
-            // 模拟API请求
-            setTimeout(() => {
-                const mockData = {
-                    id: teacherId,
-                    name: "张老师",
-                    department: "计算机科学系",
-                    avatar: "https://via.placeholder.com/40"
-                };
-                
-                // 更新UI
-                document.getElementById('teacher-name').textContent = mockData.name;
-                document.getElementById('teacher-department').textContent = mockData.department;
-                document.getElementById('teacher-avatar').src = mockData.avatar;
-            }, 500);
-        }
-        
-        /**
-         * 加载课表数据
-         * @param {string} teacherId 教师ID
-         * @param {number} weekOffset 周偏移量
-         */
-        function loadTimetable(teacherId, weekOffset) {
-            // 显示加载状态
-            const timetableBody = document.getElementById('timetable-body');
-            timetableBody.innerHTML = '<tr><td colspan="8" class="loading">加载课表中...</td></tr>';
-            
-            // 更新周显示
-            updateWeekDisplay(weekOffset);
-            
-            // 这里是模拟数据，实际应用中应该从后端API获取
-            // 接口设计：GET /api/timetable?teacherId={teacherId}&weekOffset={weekOffset}
-            // 返回示例：
-            /* {
-                "weekInfo": "2023年 第12周 (3月20日-3月26日)",
-                "timeSlots": [
-                    {
-                        "time": "08:00-08:45",
-                        "period": 1,
-                        "courses": [
-                            { "day": 1, "name": "数据结构", "class": "计算机2101", "location": "A201" },
-                            // 其他天的课程...
-                        ]
-                    },
-                    // 其他时间段...
-                ]
-            } */
-            
-            // 模拟API请求
-            setTimeout(() => {
-                const mockData = generateMockTimetable(teacherId, weekOffset);
-                
-                // 渲染课表
-                renderTimetable(mockData);
-            }, 800);
-        }
-        
-        /**
-         * 更新周显示
-         * @param {number} weekOffset 周偏移量
-         */
-        function updateWeekDisplay(weekOffset) {
-            // 这里应该根据weekOffset计算实际的周信息
-            // 实际应用中可以从后端返回的周信息获取
-            
-            const now = new Date();
-            const currentWeek = getWeekNumber(now);
-            
-            // 计算目标周的日期范围
-            const targetDate = new Date(now);
-            targetDate.setDate(now.getDate() + weekOffset * 7);
-            const targetWeek = currentWeek + weekOffset;
-            
-            // 计算周的起始日期（周一）
-            const startDate = new Date(targetDate);
-            startDate.setDate(targetDate.getDate() - ((targetDate.getDay() + 6) % 7));
-            
-            // 计算周的结束日期（周日）
-            const endDate = new Date(startDate);
-            endDate.setDate(startDate.getDate() + 6);
-            
-            // 格式化日期显示
-            const weekDisplay = `${startDate.getFullYear()}年 第${targetWeek}周 (${formatDate(startDate)}-${formatDate(endDate)})`;
-            document.getElementById('week-display').textContent = weekDisplay;
-        }
-        
-        /**
-         * 格式化日期为MM月DD日
-         * @param {Date} date 日期对象
-         * @return {string} 格式化后的日期字符串
-         */
-        function formatDate(date) {
-            return `${date.getMonth() + 1}月${date.getDate()}日`;
-        }
-        
-        /**
-         * 获取一年中的第几周
-         * @param {Date} date 日期对象
-         * @return {number} 周数
-         */
-        function getWeekNumber(date) {
-            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
-            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
-        }
-        
-        /**
-         * 生成模拟课表数据（模拟从数据库查询一周的完整课表）
-         * @param {string} teacherId 教师ID
-         * @param {number} weekOffset 周偏移量
-         * @return {object} 模拟的课表数据
-         */
-         function generateMockTimetable(teacherId, weekOffset) {
-        // 模拟从数据库查询的一周完整课表数据
-        // 课程将合理地分布在一周的不同天
-        
-        return {
-            weekInfo: `${new Date().getFullYear()}年 第${getWeekNumber(new Date()) + weekOffset}周`,
-            timeSlots: [
-                // 第1节 08:00-08:45
-                {
-                    time: "08:00-08:45",
-                    period: 1,
-                    courses: [
-                        { day: 1, name: "数据结构", class: "计算机2101", location: "A201" }, // 周一
-                        { day: 3, name: "操作系统", class: "计算机2102", location: "B305" }, // 周三
-                        { day: 5, name: "数据库原理", class: "计算机2103", location: "C102" }  // 周五
-                    ]
-                },
-                // 第2节 08:55-09:40
-                {
-                    time: "08:55-09:40",
-                    period: 2,
-                    courses: [
-                        { day: 2, name: "算法设计", class: "计算机2101", location: "D201" }, // 周二
-                        { day: 4, name: "软件工程", class: "计算机2102", location: "E305" }   // 周四
-                    ]
-                },
-                // 第3节 10:10-10:55
-                {
-                    time: "10:10-10:55",
-                    period: 3,
-                    courses: [
-                        { day: 1, name: "计算机网络", class: "计算机2103", location: "F102" }, // 周一
-                        { day: 5, name: "编译原理", class: "计算机2101", location: "A105" }     // 周五
-                    ]
-                },
-                // 第4节 11:05-11:50
-                {
-                    time: "11:05-11:50",
-                    period: 4,
-                    courses: [
-                        { day: 3, name: "人工智能", class: "计算机2102", location: "B205" } // 周三
-                    ]
-                },
-                // 第5节 14:00-14:45
-                {
-                    time: "14:00-14:45",
-                    period: 5,
-                    courses: [
-                        { day: 2, name: "机器学习", class: "计算机2103", location: "C301" }, // 周二
-                        { day: 4, name: "计算机图形学", class: "计算机2101", location: "D105" } // 周四
-                    ]
-                },
-                // 第6节 14:55-15:40
-                {
-                    time: "14:55-15:40",
-                    period: 6,
-                    courses: [
-                        { day: 1, name: "软件测试", class: "计算机2102", location: "E201" }, // 周一
-                        { day: 3, name: "大数据分析", class: "计算机2103", location: "F305" } // 周三
-                    ]
-                },
-                // 第7节 16:10-16:55
-                {
-                    time: "16:10-16:55",
-                    period: 7,
-                    courses: [
-                        { day: 5, name: "Web开发", class: "计算机2101", location: "A202" } // 周五
-                    ]
-                },
-                // 第8节 17:05-17:50
-                {
-                    time: "17:05-17:50",
-                    period: 8,
-                    courses: [
-                        { day: 2, name: "移动开发", class: "计算机2102", location: "B302" } // 周二
-                    ]
-                },
-                // 第9节 19:00-19:45
-                {
-                    time: "19:00-19:45",
-                    period: 9,
-                    courses: [
-                        { day: 4, name: "云计算", class: "计算机2103", location: "C103" } // 周四
-                    ]
-                },
-                // 第10节 19:55-20:40
-                {
-                    time: "19:55-20:40",
-                    period: 10,
-                    courses: [
-                        { day: 1, name: "信息安全", class: "计算机2101", location: "D203" }, // 周一
-                        { day: 3, name: "物联网技术", class: "计算机2102", location: "E305" } // 周三
-                    ]
-                },
-                // 第11节 20:50-21:35
-                {
-                    time: "20:50-21:35",
-                    period: 11,
-                    courses: [
-                        { day: 5, name: "分布式系统", class: "计算机2103", location: "F105" } // 周五
-                    ]
+                if (currentWeek < MAX_WEEK) {
+                    currentWeek++;
+                    loadTimetable(teacherId, currentWeek);
+                    updateNavigationButtons();
                 }
-            ]
-        };
-    }
-        
-        /**
-         * 渲染课表
-         * @param {object} timetableData 课表数据
-         */
-         function renderTimetable(timetableData) {
-    if (!timetableData || !Array.isArray(timetableData.timeSlots)) {
-        console.error('Invalid timetable data:', timetableData);
-        return;
-    }
-
-    const timetableBody = document.getElementById('timetable-body');
-    timetableBody.innerHTML = '';
-
-    // 遍历每个时间段（直接使用数据中的 timeSlots）
-    timetableData.timeSlots.forEach(slot => {
-        const row = document.createElement('tr');
-        
-        // 添加时间列
-        const timeCell = document.createElement('td');
-        timeCell.className = 'timetable-time-col';
-        timeCell.textContent = slot.time; // 使用实际时间，如 "08:00-08:45"
-        row.appendChild(timeCell);
-
-        // 添加7天的课程单元格
-        for (let day = 1; day <= 7; day++) {
-            const cell = document.createElement('td');
-            cell.className = 'course-cell';
+            });
             
-            // 查找当前天的课程
-            const course = slot.courses.find(c => c.day === day);
-
-            if (course) {
-                cell.innerHTML = `
-                    <div class="course-name">${course.name}</div>
-                    <div class="class-info">${course.class}</div>
-                    <div class="location">${course.location}</div>
-                `;
+            /**
+             * 更新导航按钮状态
+             */
+            function updateNavigationButtons() {
+                document.getElementById('prev-week').disabled = currentWeek <= MIN_WEEK;
+                document.getElementById('next-week').disabled = currentWeek >= MAX_WEEK;
             }
-            row.appendChild(cell);
-        }
-        timetableBody.appendChild(row);
-    });
-}
-
+            
+            /**
+             * 加载课表数据并填充表格
+             * @param {string} teacherId 教师ID
+             * @param {number} week 第几周
+             */
+            function loadTimetable(teacherId, week) {
+                // 更新周显示
+                updateWeekDisplay({ year: 2025, weekInfo: `第${week}周` });
+                
+                // 模拟API请求
+                setTimeout(() => {
+                    const mockData = generateMockTimetable(teacherId, week);
+                    
+                    // 填充课表数据到静态表格
+                    fillTimetable(mockData);
+                }, 300);
+            }
+            
+            /**
+             * 更新周显示
+             * @param {object} timetableData 课表数据
+             */
+            function updateWeekDisplay(timetableData) {
+                const weekDisplay = document.getElementById('week-display');
+                weekDisplay.textContent = `${timetableData.year}年 ${timetableData.weekInfo}`;
+                updateNavigationButtons();
+            }
+            
+            /**
+             * 生成模拟课表数据
+             * @param {string} teacherId 教师ID
+             * @param {number} week 第几周
+             * @return {object} 模拟的课表数据
+             */
+            function generateMockTimetable(teacherId, week) {
+                // 模拟从数据库查询的一周完整课表数据
+                return {
+                    year: 2025,
+                    weekInfo: `第${week}周`,
+                    courses: [
+                        // 周一课程
+                        { day: 1, period: 1, name: "数据结构", class: "计算机2101", location: "逸夫楼A201" },
+                        { day: 1, period: 3, name: "计算机网络", class: "计算机2103", location: "兴湘楼F102" },
+                        { day: 1, period: 6, name: "软件测试", class: "计算机2102", location: "计算中心E201" },
+                        { day: 1, period: 10, name: "信息安全", class: "计算机2101", location: "第三教学楼D203" },
+                        
+                        // 周二课程
+                        { day: 2, period: 2, name: "算法设计", class: "计算机2101", location: "逸夫楼D201" },
+                        { day: 2, period: 5, name: "机器学习", class: "计算机2103", location: "兴湘楼C301" },
+                        { day: 2, period: 8, name: "移动开发", class: "计算机2102", location: "计算中心B302" },
+                        
+                        // 周三课程
+                        { day: 3, period: 1, name: "操作系统", class: "计算机2102", location: "逸夫楼B305" },
+                        { day: 3, period: 4, name: "人工智能", class: "计算机2102", location: "兴湘楼B205" },
+                        { day: 3, period: 6, name: "大数据分析", class: "计算机2103", location: "计算中心F305" },
+                        { day: 3, period: 10, name: "物联网技术", class: "计算机2102", location: "第三教学楼E305" },
+                        
+                        // 周四课程
+                        { day: 4, period: 2, name: "软件工程", class: "计算机2102", location: "逸夫楼E305" },
+                        { day: 4, period: 5, name: "计算机图形学", class: "计算机2101", location: "兴湘楼D105" },
+                        { day: 4, period: 9, name: "云计算", class: "计算机2103", location: "计算中心C103" },
+                        
+                        // 周五课程
+                        { day: 5, period: 1, name: "数据库原理", class: "计算机2103", location: "逸夫楼C102" },
+                        { day: 5, period: 3, name: "编译原理", class: "计算机2101", location: "兴湘楼A105" },
+                        { day: 5, period: 7, name: "Web开发", class: "计算机2101", location: "计算中心A202" },
+                        { day: 5, period: 11, name: "分布式系统", class: "计算机2103", location: "第三教学楼F105" },
+                        
+                        // 周六课程
+                        { day: 6, period: 4, name: "选修课", class: "计算机2101", location: "逸夫楼A101" },
+                        
+                        // 周日课程
+                        { day: 7, period: 9, name: "学术讲座", class: "全体学生", location: "报告厅" }
+                    ]
+                };
+            }
+            
+            /**
+             * 将课表数据填充到静态表格中
+             * @param {object} timetableData 课表数据
+             */
+            function fillTimetable(timetableData) {
+                // 首先清空所有单元格
+                const cells = document.querySelectorAll('.course-cell');
+                cells.forEach(cell => {
+                    cell.innerHTML = '';
+                    cell.className = 'course-cell'; // 重置className
+                });
+                
+                // 填充有课程的单元格
+                timetableData.courses.forEach(course => {
+                    const dayPrefix = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'][course.day - 1];
+                    const cellId = `${dayPrefix}-${course.period}`;
+                    const cell = document.getElementById(cellId);
+                    
+                    if (cell) {
+                        cell.innerHTML = `
+                            <div class="course-name">${course.name}</div>
+                            <div class="class-info">${course.class}</div>
+                            <div class="location">${course.location}</div>
+                        `;
+                        cell.style.backgroundColor = '#f0f4ff'; // 添加背景色
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>
