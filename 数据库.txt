@@ -1,0 +1,218 @@
+-- 1. 用户表
+CREATE TABLE `users` (
+    user_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '全局用户唯一标识',
+    username VARCHAR(50) UNIQUE NOT NULL COMMENT '登录账号（学号/工号）',
+    password_hash CHAR(73) NOT NULL COMMENT 'BCrypt加密密码',
+    role ENUM('student','teacher','admin') NOT NULL COMMENT '角色权限控制',
+    email VARCHAR(100) COMMENT '联系邮箱',
+    phone CHAR(11) COMMENT '手机号码',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '账号创建时间'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '用户基础信息表';
+
+-- 2. 学生扩展表
+CREATE TABLE `students` (
+    student_id VARCHAR(20) PRIMARY KEY COMMENT '学号',
+    user_id INT UNIQUE NOT NULL COMMENT '关联users表',
+    class_name VARCHAR(50) COMMENT '班级名称',
+    enrollment_year YEAR COMMENT '入学年份',
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '学生扩展信息表';
+
+-- 3. 教师扩展表
+CREATE TABLE `teachers` (
+    teacher_id VARCHAR(20) PRIMARY KEY COMMENT '教师工号',
+    user_id INT UNIQUE NOT NULL COMMENT '关联users表',
+    department VARCHAR(100) COMMENT '所属院系',
+    title VARCHAR(50) COMMENT '职称（如"教授"）',
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '教师扩展信息表';
+
+-- 4. 教室表
+CREATE TABLE `classrooms` (
+    classroom_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '教室唯一标识',
+    building VARCHAR(50) NOT NULL COMMENT '教学楼名称',
+    room_number VARCHAR(20) NOT NULL COMMENT '教室编号',
+    capacity INT NOT NULL COMMENT '容纳人数',
+    equipment ENUM('basic','multimedia','lab') NOT NULL COMMENT '设备类型'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '教室信息表';
+
+-- 5. 节次时间表
+CREATE TABLE `class_sections` (
+    section_id TINYINT PRIMARY KEY COMMENT '节次编号（1-12）',
+    start_time TIME NOT NULL COMMENT '节次开始时间',
+    end_time TIME NOT NULL COMMENT '节次结束时间',
+    period_type ENUM('morning','afternoon','evening') NOT NULL COMMENT '时段类型',
+    campus VARCHAR(50) COMMENT '所属校区'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '课程节次时间配置表';
+
+-- 6. 课程表
+CREATE TABLE `courses` (
+    course_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '课程唯一标识',
+    course_code VARCHAR(20) UNIQUE NOT NULL COMMENT '课程代码（如"CS101"）',
+    course_name VARCHAR(100) NOT NULL COMMENT '课程名称',
+    credit TINYINT NOT NULL COMMENT '学分',
+    semester ENUM('spring','fall') NOT NULL COMMENT '开课学期',
+    year YEAR NOT NULL COMMENT '开课年份',
+    prerequisites JSON COMMENT '先修课程代码列表',
+    max_capacity INT DEFAULT 50 COMMENT '最大选课人数'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '课程基础信息表';
+
+-- 7. 课表安排表
+CREATE TABLE `schedules` (
+    schedule_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '课表条目唯一标识',
+    course_id INT NOT NULL COMMENT '关联courses表',
+    teacher_id VARCHAR(20) NOT NULL COMMENT '授课教师工号',
+    classroom_id INT NOT NULL COMMENT '上课教室ID',
+    section_id TINYINT NOT NULL COMMENT '节次编号',
+    week_day TINYINT CHECK (week_day BETWEEN 1 AND 7) NOT NULL COMMENT '星期几（1=周一）',
+    weeks VARCHAR(50) NOT NULL COMMENT '周次位掩码',
+    FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE,
+    FOREIGN KEY (teacher_id) REFERENCES teachers(teacher_id) ON DELETE CASCADE,
+    FOREIGN KEY (classroom_id) REFERENCES classrooms(classroom_id) ON DELETE CASCADE,
+    FOREIGN KEY (section_id) REFERENCES class_sections(section_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '课程安排表';
+
+-- 8. 选课记录表
+CREATE TABLE `enrollments` (
+    enrollment_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '选课记录标识',
+    student_id VARCHAR(20) NOT NULL COMMENT '学生学号',
+    schedule_id INT NOT NULL COMMENT '课程安排ID',
+    enrollment_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '选课时间',
+    status ENUM('enrolled','withdrawn') DEFAULT 'enrolled' COMMENT '选课状态',
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE,
+    FOREIGN KEY (schedule_id) REFERENCES schedules(schedule_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '学生选课记录表';
+
+-- 9. 考试安排表
+CREATE TABLE `exams` (
+    exam_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '考试唯一标识',
+    course_id INT NOT NULL COMMENT '关联courses表',
+    exam_type ENUM('midterm','final','makeup') NOT NULL COMMENT '考试类型',
+    exam_date DATE NOT NULL COMMENT '考试日期',
+    section_id TINYINT NOT NULL COMMENT '节次编号',
+    classroom_id INT NOT NULL COMMENT '考场教室ID',
+    duration INT NOT NULL COMMENT '考试时长（分钟）',
+    FOREIGN KEY (course_id) REFERENCES courses(course_id) ON DELETE CASCADE,
+    FOREIGN KEY (section_id) REFERENCES class_sections(section_id) ON DELETE CASCADE,
+    FOREIGN KEY (classroom_id) REFERENCES classrooms(classroom_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '考试安排表';
+
+-- 10. 成绩表
+CREATE TABLE `grades` (
+    grade_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '成绩记录标识',
+    student_id VARCHAR(20) NOT NULL COMMENT '学生学号',
+    exam_id INT NOT NULL COMMENT '关联exams表',
+    score DECIMAL(5,2) CHECK (score BETWEEN 0 AND 100) COMMENT '百分制成绩',
+    grade ENUM('A','B','C','D','F') COMMENT '等级成绩',
+    grader_id VARCHAR(20) NOT NULL COMMENT '录入教师工号',
+    comment TEXT COMMENT '教师评语',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后修改时间',
+    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE,
+    FOREIGN KEY (exam_id) REFERENCES exams(exam_id) ON DELETE CASCADE,
+    FOREIGN KEY (grader_id) REFERENCES teachers(teacher_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '考试成绩记录表';
+
+-- 11. 监考安排表
+CREATE TABLE `invigilations` (
+    invigilation_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '监考记录标识',
+    exam_id INT NOT NULL COMMENT '关联exams表',
+    teacher_id VARCHAR(20) NOT NULL COMMENT '监考教师工号',
+    role ENUM('main','assistant') NOT NULL COMMENT '主监考/副监考',
+    FOREIGN KEY (exam_id) REFERENCES exams(exam_id) ON DELETE CASCADE,
+    FOREIGN KEY (teacher_id) REFERENCES teachers(teacher_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '监考安排表';
+
+-- 12. 调课申请表
+CREATE TABLE `schedule_change_requests` (
+    request_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '调课申请标识',
+    original_schedule_id INT NOT NULL COMMENT '原课程ID',
+    teacher_id VARCHAR(20) NOT NULL COMMENT '申请教师',
+    proposed_section_id TINYINT NOT NULL COMMENT '新节次编号',
+    proposed_week_day TINYINT CHECK (proposed_week_day BETWEEN 1 AND 7) NOT NULL COMMENT '新星期几',
+    proposed_weeks VARCHAR(50) NOT NULL COMMENT '新周次位掩码',
+    proposed_classroom_id INT NOT NULL COMMENT '新教室ID',
+    reason TEXT NOT NULL COMMENT '调课原因',
+    status ENUM('pending','approved','rejected') DEFAULT 'pending' COMMENT '申请状态',
+    approver_id INT COMMENT '审批人ID',
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '申请时间',
+    processed_at TIMESTAMP COMMENT '处理时间',
+    FOREIGN KEY (original_schedule_id) REFERENCES schedules(schedule_id) ON DELETE CASCADE,
+    FOREIGN KEY (teacher_id) REFERENCES teachers(teacher_id) ON DELETE CASCADE,
+    FOREIGN KEY (proposed_section_id) REFERENCES class_sections(section_id) ON DELETE CASCADE,
+    FOREIGN KEY (proposed_classroom_id) REFERENCES classrooms(classroom_id) ON DELETE CASCADE,
+    FOREIGN KEY (approver_id) REFERENCES users(user_id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '调课申请记录表';
+
+-- 13. 调课记录表
+CREATE TABLE `schedule_changes` (
+    change_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '调课记录标识',
+    request_id INT NOT NULL COMMENT '关联调课申请',
+    original_schedule JSON NOT NULL COMMENT '原课程快照',
+    new_schedule JSON NOT NULL COMMENT '新课程快照',
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '执行时间',
+    FOREIGN KEY (request_id) REFERENCES schedule_change_requests(request_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '调课变更记录表';
+
+-- 14. 通知表
+CREATE TABLE `notifications` (
+    notification_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '通知标识',
+    user_id INT NOT NULL COMMENT '接收者ID',
+    title VARCHAR(100) NOT NULL COMMENT '通知标题',
+    content TEXT NOT NULL COMMENT '通知内容',
+    notify_time DATETIME NOT NULL COMMENT '发送时间',
+    type ENUM('schedule_change','exam','assignment') NOT NULL COMMENT '通知类型',
+    is_read BOOLEAN DEFAULT 0 COMMENT '是否已读',
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '系统通知表';
+
+-- 15. 操作日志表
+CREATE TABLE `audit_logs` (
+    log_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '日志标识',
+    user_id INT NOT NULL COMMENT '操作人ID',
+    action VARCHAR(50) NOT NULL COMMENT '操作类型（如"调课审批"）',
+    table_name VARCHAR(50) NOT NULL COMMENT '被操作表名',
+    record_id INT NOT NULL COMMENT '被操作记录ID',
+    ip_address VARCHAR(45) COMMENT '操作IP地址',
+    action_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '系统操作审计日志';
+-- 16. 学期管理表
+CREATE TABLE `semester_periods` (
+    semester_id INT PRIMARY KEY AUTO_INCREMENT COMMENT '学期唯一标识',
+    semester_name VARCHAR(50) NOT NULL COMMENT '学期名称（如"2023年秋季学期"）',
+    start_date DATE NOT NULL COMMENT '学期开始日期',
+    end_date DATE NOT NULL COMMENT '学期结束日期',
+    term_type ENUM('spring','fall') NOT NULL COMMENT '学期类型',
+    academic_year CHAR(9) NOT NULL COMMENT '学年标识（如"2023-2024"）',
+    is_current BOOLEAN DEFAULT 0 COMMENT '是否当前激活学期',
+    UNIQUE KEY uk_academic_term (academic_year, term_type),
+    CHECK (start_date < end_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT '学期时间管理表';
+CREATE TABLE `exam_arrangement_requests` (
+    request_id INT PRIMARY KEY AUTO_INCREMENT,
+    course_id INT NOT NULL,
+    teacher_id VARCHAR(20) NOT NULL, -- 申请教师
+    proposed_exam_type ENUM('midterm','final','makeup') NOT NULL,
+    proposed_exam_date DATE NOT NULL,
+    proposed_section_id TINYINT NOT NULL,
+    proposed_classroom_id INT, -- 可选，或由管理员分配
+    proposed_duration INT NOT NULL,
+    reason TEXT,
+    status ENUM('pending','approved','rejected') DEFAULT 'pending',
+    approver_id INT,
+    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP NULL,
+    FOREIGN KEY (course_id) REFERENCES courses(course_id),
+    FOREIGN KEY (teacher_id) REFERENCES teachers(teacher_id),
+    FOREIGN KEY (proposed_section_id) REFERENCES class_sections(section_id),
+    FOREIGN KEY (proposed_classroom_id) REFERENCES classrooms(classroom_id),
+    FOREIGN KEY (approver_id) REFERENCES users(user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+CREATE TABLE `revoked_tokens` (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    jti VARCHAR(255) UNIQUE NOT NULL COMMENT 'JWT ID (jti claim), a unique identifier for the token',
+    user_id INT COMMENT 'Optional: The user_id this token belonged to, for auditing',
+    expiry_time TIMESTAMP NOT NULL COMMENT 'When this token actually expires, for cleanup purposes',
+    revoked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT 'When this token was added to the blacklist',
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT 'JWT Blacklist Table';
