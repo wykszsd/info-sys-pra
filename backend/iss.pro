@@ -10,7 +10,7 @@ SOURCES += \
         main.cpp \
         middleware/jwt_middleware.cpp \
         passwordhasher.cpp \
-        router.cpp \
+        routerc.cpp \
         sqlserver.cpp \
         utils/request_parser.cpp
 
@@ -22,7 +22,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     middleware/jwt_middleware.h \
     passwordhasher.h \
-    router.h \
+    routerc.h \
     sqlserver.h \
     utils/request_parser.h
 INCLUDEPATH +=$$PWD/cryptoheaders/
@@ -37,3 +37,6 @@ else{
 
 LIBS += -lcryptlib
 }
+
+RESOURCES += \
+    rec.qrc

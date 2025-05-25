@@ -8,7 +8,7 @@
 #include <QSettings>    // 可选：用于从配置文件读取端口等
 #include <QTcpServer>
 #include "sqlserver.h"  // 数据库管理类
-#include "router.h"     // API路由配置类
+#include "routerc.h"     // API路由配置类
 
 // 函数：尝试从配置文件或环境变量获取端口，否则使用默认值
 quint16 getServerPort() {
@@ -91,7 +91,8 @@ int main(int argc, char *argv[]) {
 
     // --- 配置API路由 ---
     qInfo() << "正在配置API路由...";
-    Router apiRouter(&dbManager);   // 创建路由实例，并传入数据库管理器
+    routerc apiRouter;   // 创建路由实例，并传入数据库管理器
+    apiRouter.setsql(&dbManager);
     apiRouter.setupRoutes(httpServer); // 调用Router类的方法来设置所有API路由
 
     // --- 启动服务器监听 ---
@@ -99,32 +100,26 @@ int main(int argc, char *argv[]) {
     // 它返回实际监听的端口号，如果失败则返回0。
     QTcpServer tcpserver;
     qInfo() << "服务器尝试在地址" << QHostAddress::Any << "端口" << port << "上启动监听...";
-    const quint16 actualPort = tcpserver.listen(QHostAddress::Any, port)&&httpServer.bind(&tcpserver);
+   const bool isacc = tcpserver.listen(QHostAddress::Any, port)&&httpServer.bind(&tcpserver);
 
-    if (!actualPort) {
+    if (!isacc) {
         qCritical() << "服务器启动失败! 无法在端口" << port << "上监听。";
 
 
         return 1; // 返回错误码
     }
 
-    if (actualPort != port) {
-        qWarning() << "服务器实际监听端口与请求端口不符。请求端口:" << port << ", 实际监听端口:" << actualPort;
-        // 这通常在请求端口为0（自动选择）时发生
-    }
+
 
     qInfo() << "======================================================";
     qInfo() << QCoreApplication::applicationName() << "版本" << QCoreApplication::applicationVersion() << "已成功启动！";
     qInfo() << "服务器正在监听: http://"
             << (QHostAddress::Any == QHostAddress::AnyIPv4 ? "0.0.0.0" : "[::]") // 更明确的监听地址
-            << ":" << actualPort;
+            << ":" << port;
     qInfo() << "使用Ctrl+C停止服务器。";
     qInfo() << "======================================================";
-    qInfo() << "基本测试端点:";
-    qInfo() << "  登录 (POST): http://localhost:" << actualPort << "/api/auth/login";
-    qInfo() << "  获取当前用户 (GET): http://localhost:" << actualPort << "/api/auth/me (需提供Bearer Token)";
-    qInfo() << "  获取当前学期 (GET): http://localhost:" << actualPort << "/api/semesters/current";
-    qInfo() << "  管理员获取课程 (GET): http://localhost:" << actualPort << "/api/admin/courses (需管理员Token)";
+
+
 
 
     // --- 进入Qt事件循环 ---

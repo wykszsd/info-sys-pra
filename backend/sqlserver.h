@@ -11,6 +11,7 @@
 #include <QSqlRecord>
 #include "passwordhasher.h"
 #include <algorithm>
+#include "./utils/request_parser.h"
 class SqlServer : public QObject
 {
     Q_OBJECT
@@ -32,10 +33,7 @@ public :
     QJsonArray getUserExamSchedule(int user_id, int semester_id);
     bool Logining(QString username,QString password,QJsonObject & ob,QString &str);
     QJsonArray getUserClassTable(int user_id, int semester_id, int target_week);
-    QJsonArray getEmptyClassroom(QDate start_date, QDate end_date,
-                                 const QString& building, const QString& room_type, // room_type 对应 equipment
-                                 const QList<int>& section_ids, int min_capacity);
-
+    QJsonArray getEmptyClassroom(QDate start_date, QDate end_date, const QString &building, const QString &room_type, const QList<int> section_ids, int min_capacity);
 
     bool addTokenToBlacklist(const QString& jti, quint64 userId, QDateTime expiryTime, QString& message);
 

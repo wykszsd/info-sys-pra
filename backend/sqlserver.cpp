@@ -20,6 +20,7 @@ SqlServer::SqlServer(QObject *parent)
         _query=new QSqlQuery();
     }
 
+
 }
 
 SqlServer::~SqlServer()
@@ -277,8 +278,11 @@ bool SqlServer::Logining(QString username, QString password, QJsonObject &ob,QSt
 "users "
 "WHERE "
                     "username = ?; ");
+
     _query->addBindValue(username);
+
     if(_query->exec()){
+
         if(_query->first()){
 
             if(PasswordHashing::VerifyPasswordFixedLength(password,_query->value("password_hash").toString())){
@@ -326,7 +330,7 @@ QJsonArray SqlServer::getUserClassTable(int user_id, int semester_id, int target
         "SELECT "
         "s.schedule_id, c.course_id, c.course_code, c.course_name, "
         "s.week_day, cs.section_id, cs.start_time, cs.end_time, " // 加入了 start_time, end_time
-        "cr.building, cr.room_number, "
+        "cr.building as classroom_building , cr.room_number as classroom_room_number, "
         "t_user.username AS teacher_name, t.title AS teacher_title "
         "FROM students std "
         "JOIN users u ON std.user_id = u.user_id "
@@ -366,22 +370,120 @@ QJsonArray SqlServer::getUserClassTable(int user_id, int semester_id, int target
     return _arr;
 }
 
-QJsonArray SqlServer::getEmptyClassroom(QDate start_date, QDate end_date, const QString &building, const QString &room_type, const QList<int> &section_ids, int min_capacity)
+// QJsonArray SqlServer::getEmptyClassroom(QDate start_date, QDate end_date, const QString &building, const QString &room_type, const QList<int> &section_ids, int min_capacity)
+// {
+//     QJsonArray result_per_day_array; // 数组的数组，每天一个子数组
+
+//     if (section_ids.isEmpty()) {
+//         qWarning() << "getEmptyClassroom: section_ids list cannot be empty.";
+//         return result_per_day_array;
+//     }
+
+//     // 构建节次 ID 的占位符字符串，例如: (?, ?, ?)
+//     QStringList section_placeholders;
+//     for (int i = 0; i < section_ids.size(); ++i) {
+//         section_placeholders << "?";
+//     }
+//     QString section_in_clause = section_placeholders.join(", ");
+
+
+//     for (QDate current_date = start_date; current_date <= end_date; current_date = current_date.addDays(1)) {
+//         QJsonArray available_classrooms_for_date;
+//         QString sql =
+//             "WITH PotentialClassrooms AS ( "
+//             "    SELECT cr.classroom_id, cr.building, cr.room_number, cr.capacity, cr.equipment "
+//             "    FROM classrooms cr "
+//             "    WHERE (:target_building IS NULL OR cr.building = :target_building) "
+//             "      AND (:target_equipment_type IS NULL OR cr.equipment = :target_equipment_type) "
+//             "      AND (:min_capacity <= 0 OR cr.capacity >= :min_capacity) " // 增加容量筛选
+//             "), "
+//             "OccupiedClassroomsOnDateAndSections AS ( "
+//             "    SELECT DISTINCT s.classroom_id "
+//             "    FROM schedules s "
+//             "    JOIN courses c ON s.course_id = c.course_id "
+//             "    JOIN semester_periods sp ON sp.term_type = c.semester " // 用于计算周次
+//             "        AND c.year = (CASE sp.term_type "
+//             "                        WHEN 'fall' THEN CAST(SUBSTRING_INDEX(sp.academic_year, '-', 1) AS UNSIGNED) "
+//             "                        WHEN 'spring' THEN CAST(SUBSTRING_INDEX(sp.academic_year, '-', -1) AS UNSIGNED) "
+//             "                      END) "
+//             "    WHERE s.section_id IN ("
+//                       + section_in_clause + ") " // 使用 IN 子句
+//                                   "      AND :query_single_date BETWEEN sp.start_date AND sp.end_date "
+//                                   "      AND s.week_day = ((DAYOFWEEK(:query_single_date) + 5) % 7 + 1) "
+//                                   "      AND SUBSTRING(s.weeks, (WEEK(:query_single_date, 1) - WEEK(sp.start_date, 1) + 1), 1) = '1' "
+//                                   "    UNION "
+//                                   "    SELECT DISTINCT e.classroom_id "
+//                                   "    FROM exams e "
+//                                   "    WHERE e.exam_date = :query_single_date "
+//                                   "      AND e.section_id IN (" + section_in_clause + ") " // 使用 IN 子句
+//                                   ") "
+//                                   "SELECT pc.classroom_id, pc.building, pc.room_number, pc.capacity, pc.equipment "
+//                                   "FROM PotentialClassrooms pc "
+//                                   "LEFT JOIN OccupiedClassroomsOnDateAndSections ocs ON pc.classroom_id = ocs.classroom_id "
+//                                   "WHERE ocs.classroom_id IS NULL "
+//                                   "ORDER BY pc.building, pc.room_number;";
+
+//         _query->prepare(sql);
+
+//         // 绑定固定参数
+//         _query->bindValue(":target_building", building.isEmpty() ? QVariant() : building);
+//         _query->bindValue(":target_equipment_type", room_type.isEmpty() ? QVariant() : room_type);
+//         _query->bindValue(":min_capacity", min_capacity <= 0 ? QVariant() : min_capacity);
+//         _query->bindValue(":query_single_date", current_date);
+
+//         // 动态绑定 section_ids (因为prepare后不能改变?数量, 所以在prepare前构造sql)
+//         // 这里我们是在prepare之后，所以要按顺序 addBindValue
+//         // 注意：Qt的QSqlQuery对于IN子句的多个?占位符，通过多次addBindValue绑定是正确的。
+//         // 另一种方法是_query->bindValue(placeholderName, QVariantList) 如果驱动支持
+//         // 但最安全的是按顺序addBindValue，因为我们已将?直接写入SQL字符串
+//         // int bind_idx = 0; // 用于追踪绑定位置，因为 :placeholder 已被替换
+//         for (int section_id : section_ids) {
+//             _query->addBindValue(section_id); // 第一次绑定 s.section_id IN (...)
+//         }
+//         for (int section_id : section_ids) {
+//             _query->addBindValue(section_id); // 第二次绑定 e.section_id IN (...)
+//         }
+
+
+//         if (_query->exec()) {
+//             QSqlRecord _re = _query->record();
+//             while (_query->next()) {
+//                 QJsonObject ob;
+//                 for (int i = 0; i < _re.count(); i++) {
+//                     ob.insert(_re.fieldName(i), QJsonValue::fromVariant( _query->value(i)));
+//                 }
+//                 available_classrooms_for_date.append(ob);
+//             }
+//         } else {
+//             qDebug() << "Failed to get empty classrooms for date" << current_date.toString("yyyy-MM-dd") << ":" << _query->lastError().text();
+//             qDebug() << "Executed query:" << _query->lastQuery();
+//             qDebug() << "Bound values:" << _query->boundValues();
+//         }
+//         result_per_day_array.append(QJsonValue(available_classrooms_for_date)); // 将当天空教室数组加入总数组
+//     }
+//     return result_per_day_array;
+// }
+QJsonArray SqlServer::getEmptyClassroom(QDate start_date, QDate end_date, const QString &building, const QString &room_type, const QList<int> section_ids, int min_capacity)
 {
-    QJsonArray result_per_day_array; // 数组的数组，每天一个子数组
+    QJsonArray result_per_day_array;
 
     if (section_ids.isEmpty()) {
-        qWarning() << "getEmptyClassroom: section_ids list cannot be empty.";
+        qWarning() << "getEmptyClassroom: section_ids list cannot be empty. Query will not be executed.";
+        // 如果日期范围内没有节次ID，则不应执行查询，直接返回空数组。
         return result_per_day_array;
     }
 
-    // 构建节次 ID 的占位符字符串，例如: (?, ?, ?)
-    QStringList section_placeholders;
+    // 为 IN 子句构建唯一的命名占位符字符串
+    QStringList s_section_placeholders;
+    QStringList e_section_placeholders;
     for (int i = 0; i < section_ids.size(); ++i) {
-        section_placeholders << "?";
+        s_section_placeholders << QString(":s_section_id_%1").arg(i);
+        e_section_placeholders << QString(":e_section_id_%1").arg(i);
     }
-    QString section_in_clause = section_placeholders.join(", ");
-
+    // .join(", ") 会确保如果列表为空，结果是空字符串，这在IN子句中是无效的。
+    // 但我们已经在函数开头检查了 section_ids.isEmpty()。
+    QString s_section_in_clause = s_section_placeholders.join(", ");
+    QString e_section_in_clause = e_section_placeholders.join(", ");
 
     for (QDate current_date = start_date; current_date <= end_date; current_date = current_date.addDays(1)) {
         QJsonArray available_classrooms_for_date;
@@ -389,76 +491,70 @@ QJsonArray SqlServer::getEmptyClassroom(QDate start_date, QDate end_date, const 
             "WITH PotentialClassrooms AS ( "
             "    SELECT cr.classroom_id, cr.building, cr.room_number, cr.capacity, cr.equipment "
             "    FROM classrooms cr "
-            "    WHERE (:target_building IS NULL OR cr.building = :target_building) "
-            "      AND (:target_equipment_type IS NULL OR cr.equipment = :target_equipment_type) "
-            "      AND (:min_capacity <= 0 OR cr.capacity >= :min_capacity) " // 增加容量筛选
+            "    WHERE (:target_building IS NULL OR cr.building = :target_building) " // 使用命名占位符
+            "      AND (:target_equipment_type IS NULL OR cr.equipment = :target_equipment_type) " // 使用命名占位符
+            "      AND (:min_capacity < 0 OR cr.capacity >= :min_capacity) " // 使用命名占位符, -1 表示不筛选
             "), "
             "OccupiedClassroomsOnDateAndSections AS ( "
             "    SELECT DISTINCT s.classroom_id "
             "    FROM schedules s "
             "    JOIN courses c ON s.course_id = c.course_id "
-            "    JOIN semester_periods sp ON sp.term_type = c.semester " // 用于计算周次
+            "    JOIN semester_periods sp ON sp.term_type = c.semester "
             "        AND c.year = (CASE sp.term_type "
             "                        WHEN 'fall' THEN CAST(SUBSTRING_INDEX(sp.academic_year, '-', 1) AS UNSIGNED) "
             "                        WHEN 'spring' THEN CAST(SUBSTRING_INDEX(sp.academic_year, '-', -1) AS UNSIGNED) "
             "                      END) "
-            "    WHERE s.section_id IN (" + section_in_clause + ") " // 使用 IN 子句
-                                  "      AND :query_single_date BETWEEN sp.start_date AND sp.end_date "
-                                  "      AND s.week_day = ((DAYOFWEEK(:query_single_date) + 5) % 7 + 1) "
-                                  "      AND SUBSTRING(s.weeks, (WEEK(:query_single_date, 1) - WEEK(sp.start_date, 1) + 1), 1) = '1' "
-                                  "    UNION "
-                                  "    SELECT DISTINCT e.classroom_id "
-                                  "    FROM exams e "
-                                  "    WHERE e.exam_date = :query_single_date "
-                                  "      AND e.section_id IN (" + section_in_clause + ") " // 使用 IN 子句
-                                  ") "
-                                  "SELECT pc.classroom_id, pc.building, pc.room_number, pc.capacity, pc.equipment "
-                                  "FROM PotentialClassrooms pc "
-                                  "LEFT JOIN OccupiedClassroomsOnDateAndSections ocs ON pc.classroom_id = ocs.classroom_id "
-                                  "WHERE ocs.classroom_id IS NULL "
-                                  "ORDER BY pc.building, pc.room_number;";
+            "    WHERE s.section_id IN (" + s_section_in_clause + ") " // 使用生成的命名占位符列表
+                                    "      AND :query_single_date BETWEEN sp.start_date AND sp.end_date " // 使用命名占位符
+                                    "      AND s.week_day = ((DAYOFWEEK(:query_single_date) + 5) % 7 + 1) "
+                                    "      AND SUBSTRING(s.weeks, (WEEK(:query_single_date, 1) - WEEK(sp.start_date, 1) + 1), 1) = '1' "
+                                    "    UNION "
+                                    "    SELECT DISTINCT e.classroom_id "
+                                    "    FROM exams e "
+                                    "    WHERE e.exam_date = :query_single_date " // 使用命名占位符
+                                    "      AND e.section_id IN (" + e_section_in_clause + ") " // 使用生成的命名占位符列表
+                                    ") "
+                                    "SELECT pc.classroom_id, pc.building, pc.room_number, pc.capacity, pc.equipment "
+                                    "FROM PotentialClassrooms pc "
+                                    "LEFT JOIN OccupiedClassroomsOnDateAndSections ocs ON pc.classroom_id = ocs.classroom_id "
+                                    "WHERE ocs.classroom_id IS NULL "
+                                    "ORDER BY pc.building, pc.room_number;";
 
         _query->prepare(sql);
 
-        // 绑定固定参数
-        _query->bindValue(":target_building", building.isEmpty() ? QVariant() : building);
-        _query->bindValue(":target_equipment_type", room_type.isEmpty() ? QVariant() : room_type);
-        _query->bindValue(":min_capacity", min_capacity <= 0 ? QVariant() : min_capacity);
+        // 绑定所有命名参数
+        _query->bindValue(":target_building", building.isEmpty() ? QVariant() : building); // QVariant() 用于传递 NULL
+        _query->bindValue(":target_equipment_type", room_type.isEmpty() ? QVariant() : room_type); // QVariant() 用于传递 NULL
+        _query->bindValue(":min_capacity", min_capacity); // 直接绑定值，SQL逻辑处理负数代表不筛选
         _query->bindValue(":query_single_date", current_date);
 
-        // 动态绑定 section_ids (因为prepare后不能改变?数量, 所以在prepare前构造sql)
-        // 这里我们是在prepare之后，所以要按顺序 addBindValue
-        // 注意：Qt的QSqlQuery对于IN子句的多个?占位符，通过多次addBindValue绑定是正确的。
-        // 另一种方法是_query->bindValue(placeholderName, QVariantList) 如果驱动支持
-        // 但最安全的是按顺序addBindValue，因为我们已将?直接写入SQL字符串
-        // int bind_idx = 0; // 用于追踪绑定位置，因为 :placeholder 已被替换
-        for (int section_id : section_ids) {
-            _query->addBindValue(section_id); // 第一次绑定 s.section_id IN (...)
+        // 绑定 IN 子句的命名参数
+        for (int i = 0; i < section_ids.size(); ++i) {
+            _query->bindValue(QString(":s_section_id_%1").arg(i), section_ids.at(i));
+            _query->bindValue(QString(":e_section_id_%1").arg(i), section_ids.at(i));
         }
-        for (int section_id : section_ids) {
-            _query->addBindValue(section_id); // 第二次绑定 e.section_id IN (...)
-        }
-
 
         if (_query->exec()) {
-            QSqlRecord _re = _query->record();
+            QSqlRecord record = _query->record(); // 获取记录元数据
             while (_query->next()) {
-                QJsonObject ob;
-                for (int i = 0; i < _re.count(); i++) {
-                    ob.insert(_re.fieldName(i), QJsonValue::fromVariant( _query->value(i)));
+                QJsonObject classroomObject;
+                for (int i = 0; i < record.count(); i++) {
+                    classroomObject[record.fieldName(i)]= QJsonValue::fromVariant(_query->value(i));
                 }
-                available_classrooms_for_date.append(ob);
+                available_classrooms_for_date.append(classroomObject);
             }
         } else {
             qDebug() << "Failed to get empty classrooms for date" << current_date.toString("yyyy-MM-dd") << ":" << _query->lastError().text();
-            qDebug() << "Executed query:" << _query->lastQuery();
-            qDebug() << "Bound values:" << _query->boundValues();
+            qDebug() << "Executed query (with generated named placeholders for IN clauses):" << sql;
+            // 对于命名绑定，boundValues() 在 Qt 6 中返回 QVariantMap。
+            // 在 Qt 5 中，QMYSQL 的行为可能导致它返回 QList，但绑定本身应该正确。
+            // 错误日志已经显示了 _query->boundValues() 的输出，这里可以再次打印以确认
+            qDebug() << "Bound values (as reported by Qt/Driver for this execution):" << _query->boundValues();
         }
-        result_per_day_array.append(QJsonValue(available_classrooms_for_date)); // 将当天空教室数组加入总数组
+        result_per_day_array.append(QJsonValue(available_classrooms_for_date));
     }
     return result_per_day_array;
 }
-
 bool SqlServer::addTokenToBlacklist(const QString &jti, quint64 userId, QDateTime expiryTime, QString &message)
 {
     if (jti.isEmpty()) {
@@ -894,6 +990,7 @@ QJsonArray SqlServer::getSelectableCourses(int semester_id, int student_user_id)
             } else {
                 course.insert("is_full", false);
             }
+            course["weeks"]=RequestParser::binaryToRangeString(course["weeks"].toString());
             selectableCourses.append(course);
         }
     } else {
@@ -963,7 +1060,7 @@ QJsonArray SqlServer::getTaughtSchedulesByTeacher(const QString &teacher_db_id, 
     _query->prepare(
         "SELECT s.schedule_id, c.course_id, c.course_code, c.course_name, c.credit, c.max_capacity, "
         "s.week_day, s.weeks, cs.section_id, cs.start_time, cs.end_time, "
-        "cr.building, cr.room_number, "
+        "cr.building as classroom_building, cr.room_number as classroom_room_number, "
         "(SELECT COUNT(*) FROM enrollments en_count WHERE en_count.schedule_id = s.schedule_id AND en_count.status = 'enrolled') AS enrolled_count "
         "FROM schedules s "
         "JOIN courses c ON s.course_id = c.course_id "
@@ -981,8 +1078,10 @@ QJsonArray SqlServer::getTaughtSchedulesByTeacher(const QString &teacher_db_id, 
         while (_query->next()) {
             QJsonObject schedule;
             for (int i = 0; i < record.count(); ++i) {
+
                 schedule.insert(record.fieldName(i), QJsonValue::fromVariant( _query->value(i)));
             }
+
             schedulesArray.append(schedule);
         }
     } else {
@@ -1095,6 +1194,7 @@ QJsonArray SqlServer::getMyRequests(const QString &teacher_db_id)
             for (int i = 0; i < record.count(); ++i) {
                 req.insert(record.fieldName(i), QJsonValue::fromVariant( _query->value(i)));
             }
+            req["proposed_weeks"]=RequestParser::binaryToRangeString( req["proposed_weeks"].toString());
             requestsArray.append(req);
         }
     } else {
@@ -1130,7 +1230,7 @@ QJsonArray SqlServer::getMyRequests(const QString &teacher_db_id)
 
 bool SqlServer::createAssignmentNotification(const QJsonObject &assignmentPayload, int teacher_user_id, QString &message)
 {    Q_UNUSED(teacher_user_id)
-    int course_id = assignmentPayload["courseId"].toInt();
+    int course_id = assignmentPayload["course_id"].toInt();
     QString title = assignmentPayload["title"].toString();
     QString content = assignmentPayload["content"].toString();
 
@@ -3042,26 +3142,30 @@ QJsonObject SqlServer::getSchedulesListAdmin(int page, int pageSize, const QStri
         bindValues[":sid_eq"] = filter["sectionId_eq"].toInt();
     }
 
-    // 学期筛选 (关键)
+
+    // 学期筛选
+    bool applySemesterFilter = false;
+    int target_year_filter = 0;
+    QString target_semester_enum_filter;
+
     if (filter.contains("semesterId_eq") && filter["semesterId_eq"].isDouble()) {
         int semester_id_filter = filter["semesterId_eq"].toInt();
-        int target_year_filter;
-        QString target_semester_enum_filter;
+        // 尝试解析学期ID，如果解析成功，则设置 applySemesterFilter 为 true
         if (getYearAndSemesterFromId(semester_id_filter, target_year_filter, target_semester_enum_filter)) {
-            conditions += "AND c.year = :filter_year AND c.semester = :filter_semester ";
-            bindValues[":filter_year"] = target_year_filter;
-            bindValues[":filter_semester"] = target_semester_enum_filter;
+            applySemesterFilter = true;
         } else {
-            error = "Invalid semesterId in filter, cannot apply semester filter.";
-            //可以选择返回空或者忽略此筛选
+            // 如果提供了 semesterId 但其值无效，则返回错误。
+            error = "提供的学期ID无效，无法应用学期筛选。请提供一个有效的学期ID或不提供学期ID以查看所有排课。";
+            result.insert("data", QJsonArray());
+            result.insert("totalCount", 0);
+            return result; // 提前返回错误
         }
-    } else { // 如果没有提供学期筛选，可能需要一个默认行为，例如只显示当前学期或报错
-        // For now, if no semesterId_eq, it shows all schedules across all semesters matching other filters.
-        // This might be too much data. Consider making semesterId_eq mandatory.
-        error = "Semester ID filter (semesterId_eq) is highly recommended or mandatory for schedule listing.";
-        // return result; // Or proceed with caution
     }
-
+    // 如果 applySemesterFilter 为 false（即没有提供 semesterId_eq 或其值为0），则不添加学期筛选条件。
+    if (applySemesterFilter) {
+        conditions += "AND c.year = :filter_year AND c.semester = :filter_semester ";
+    }
+    // 注意：这里移除了之前强制要求 semesterId_eq 的 `else` 块，使其不再强制。
 
     // 1. 获取总数
     QSqlQuery countQuery(db);
@@ -3115,6 +3219,11 @@ QJsonObject SqlServer::getSchedulesListAdmin(int page, int pageSize, const QStri
     for (auto it = bindValues.constBegin(); it != bindValues.constEnd(); ++it) {
         _query->bindValue(it.key(), it.value());
     }
+    // 绑定学期筛选值，只有在需要时才绑定
+    if (applySemesterFilter) {
+        _query->bindValue(":filter_year", target_year_filter);
+        _query->bindValue(":filter_semester", target_semester_enum_filter);
+    }
     if (page >= 0 && pageSize > 0) {
         _query->bindValue(":limit", pageSize);
         _query->bindValue(":offset", page * pageSize);
@@ -3132,6 +3241,7 @@ QJsonObject SqlServer::getSchedulesListAdmin(int page, int pageSize, const QStri
                     schedule.insert(record.fieldName(i), _query->value(i).toJsonValue());
                 }
             }
+            schedule["weeks"]=RequestParser::binaryToRangeString(schedule["weeks"].toString());
             schedulesArray.append(schedule);
         }
     } else {
@@ -3474,6 +3584,9 @@ QJsonArray SqlServer::getPendingRequestsAdmin(const QString& filterType, QString
                         req.insert(fieldName, QJsonValue::fromVariant(val));
                     }
                 }
+                req["original_weeks"]=RequestParser::binaryToRangeString( req["original_weeks"].toString());
+                req["proposed_weeks"]=RequestParser::binaryToRangeString( req["proposed_weeks"].toString());
+
                 tempRequestsList.push_back(req); // 添加到临时 vector
             }
         } else {

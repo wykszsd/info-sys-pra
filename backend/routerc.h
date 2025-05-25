@@ -1,18 +1,18 @@
-// router.h
+#ifndef ROUTERC_H
+#define ROUTERC_H
 
-#ifndef ROUTER_H
-#define ROUTER_H
-
+#include <QObject>
 #include <QHttpServer> // QHttpServer 定义
 #include "sqlserver.h" // 需要 SqlServer 类的定义
-
-class Router {
+#include <QHttpHeaders>
+#include <QFile>
+class routerc : public QObject
+{
+    Q_OBJECT
 public:
-    // 构造函数，接收一个 SqlServer 实例的指针
-    // Router 类不拥有 SqlServer 实例的生命周期，它仅使用该实例
-    explicit Router(SqlServer *db);
+    explicit routerc(QObject *parent = nullptr);
 
-    // 主方法，用于在 QHttpServer 实例上设置所有API路由
+    void setsql(SqlServer * p);
     void setupRoutes(QHttpServer &server);
 
 private:
@@ -27,6 +27,8 @@ private:
 
     // 也可以将一些通用的路由处理辅助函数声明为私有静态方法，
     // 或者放在一个专门的 HttpUtils 命名空间/类中。
+
+
 };
 
-#endif // ROUTER_H
+#endif // ROUTERC_H

@@ -6,6 +6,7 @@
 #include <QUrlQuery>
 #include <QVariant> // 用于可选参数
 #include <QHttpHeaders>
+#include <QBitArray>
 namespace RequestParser {
 
 // 解析JSON请求体 (这个之前已经比较完善了)
@@ -104,6 +105,18 @@ struct TimetableQueryParams {
 QVariant getQueryParamAsInt(const QUrlQuery& query, const QString& key, bool& present, bool& ok);
 QString getQueryParamAsString(const QUrlQuery& query, const QString& key, bool& present);
 
+
+// 使这些转换函数可以从 Router.cpp 调用
+// 通用的大小写转换函数
+QString camelToSnake(const QString& s);
+ QString snakeToCamel(const QString& s);
+
+// 递归转换 QJsonValue (处理 QJsonObject 和 QJsonArray)
+ QJsonValue convertJsonValueKeys(const QJsonValue& value, std::function<QString(const QString&)> keyConverter);
+ QJsonObject convertJsonObjectKeys(const QJsonObject& obj, std::function<QString(const QString&)> keyConverter);
+ QJsonArray convertJsonArrayKeys(const QJsonArray& arr, std::function<QString(const QString&)> keyConverter);
+ QString mapInputToBitString(const QString& inputRangeString, int totalBits = 50);
+ QString binaryToRangeString(const QString& binaryWeekString);
 
 } // namespace RequestParser
 

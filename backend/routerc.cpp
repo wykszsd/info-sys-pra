@@ -1,34 +1,46 @@
-// router.cpp
+#include "routerc.h"
 
-#include "router.h"
 #include "middleware/jwt_middleware.h" // 使用我们之前定义的极简JWT
 #include "utils/request_parser.h"    // 使用我们之前定义的参数解析器
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray> // 为了能返回JsonArray类型的响应
 #include <QDebug>
+routerc::routerc(QObject *parent)
+    : QObject{parent}
+{}
 
-// --- 构造函数 ---
-Router::Router(SqlServer *db) : m_db(db) {
-    if (!m_db) {
-        // 在实际应用中，如果数据库实例为空，应该是一个致命错误，
-        // 因为服务器无法在没有数据库的情况下正常工作。
-        qFatal("致命错误: Router构造函数中的SqlServer实例为空!");
-    }
+void routerc::setsql(SqlServer *p)
+{
+    m_db=p;
 }
+
+
 
 // --- 辅助函数：用于创建标准化的HTTP响应 ---
 
 // 发送成功的JSON对象响应
 static QHttpServerResponse jsonResponse(const QJsonObject &data,
                                         QHttpServerResponse::StatusCode statusCode = QHttpServerResponse::StatusCode::Ok) {
-    return QHttpServerResponse(data, statusCode);
+    QJsonObject camelCaseData = RequestParser::convertJsonObjectKeys(data, RequestParser::snakeToCamel);
+    QHttpServerResponse response(camelCaseData, statusCode);
+    QHttpHeaders headers;
+    headers.append("Access-Control-Allow-Origin", "http://localhost:5173");
+    headers.append("Access-Control-Allow-Credentials", "true");
+    response.setHeaders(headers);
+    return response;
 }
 
 // 发送成功的JSON数组响应
 static QHttpServerResponse jsonResponse(const QJsonArray &data,
                                         QHttpServerResponse::StatusCode statusCode = QHttpServerResponse::StatusCode::Ok) {
-    return QHttpServerResponse(data, statusCode);
+    QJsonArray camelCaseData = RequestParser::convertJsonArrayKeys(data, RequestParser::snakeToCamel);
+    QHttpServerResponse response(camelCaseData, statusCode);
+    QHttpHeaders headers;
+    headers.append("Access-Control-Allow-Origin", "http://localhost:5173");
+    headers.append("Access-Control-Allow-Credentials", "true");
+    response.setHeaders(headers);
+    return response;
 }
 
 // 发送错误响应
@@ -37,19 +49,67 @@ static QHttpServerResponse errorResponse(const QString &message,
     QJsonObject errorObj;
     errorObj["message"] = message;
     qWarning() << "错误响应 (" << static_cast<int>(statusCode) << "):" << message;
-    return QHttpServerResponse(errorObj, statusCode);
+    QHttpServerResponse response(errorObj, statusCode);
+    QHttpHeaders headers;
+    headers.append("Access-Control-Allow-Origin", "http://localhost:5173");
+    headers.append("Access-Control-Allow-Credentials", "true");
+    response.setHeaders(headers);
+    return response;
+
 }
 
 // 发送成功的无内容响应 (例如，用于登出或某些DELETE操作)
 static QHttpServerResponse noContentResponse() {
-    return QHttpServerResponse(QHttpServerResponse::StatusCode::NoContent);
+    QHttpServerResponse response(QHttpServerResponse::StatusCode::NoContent);
+    QHttpHeaders headers;
+    headers.append("Access-Control-Allow-Origin", "http://localhost:5173");
+    headers.append("Access-Control-Allow-Credentials", "true");
+    response.setHeaders(headers);
+    return response;
+
 }
 
 // --- setupRoutes 方法的开始 ---
-void Router::setupRoutes(QHttpServer &server) {
+void routerc::setupRoutes(QHttpServer &server) {
     qInfo() << "开始配置API路由...";
+    server.setMissingHandler(this,[](const QHttpServerRequest &request,QHttpServerResponder & responder){
+        if(request.method()== QHttpServerRequest::Method::Options){
 
-    // =============================================
+            qDebug() << "收到预检 OPTIONS 请求 (全局):" << request.url().path();
+            QHttpServerResponse response(QHttpServerResponse::StatusCode::NoContent); // 204 No Content 通常用于 OPTIONS
+            QHttpHeaders headers;
+
+            headers.append("Access-Control-Allow-Origin", "http://localhost:5173");
+            headers.append("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS");
+            headers.append("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With"); // 包含你前端可能发送的所有头部
+            headers.append("Access-Control-Max-Age", "86400"); // 预检请求结果的缓存时间 (秒)，例如1天
+            headers.append("Access-Control-Allow-Credentials", "true");
+            response.setHeaders(headers);
+            responder.sendResponse(response);
+        }
+    }
+                             );
+    server.route("/",QHttpServerRequest::Method::AnyKnown,[]()->QHttpServerResponse{
+        QFile file(":/dist/index.html");
+        file.open(QIODevice::ReadOnly);
+
+return QHttpServerResponse(file.readAll());
+
+});
+    server.route("/assets/<arg>",QHttpServerRequest::Method::AnyKnown,[](const QString rec)->QHttpServerResponse{
+
+        QFile file(":/assets/"+rec);
+        file.open(QIODevice::ReadOnly);
+        QHttpServerResponse re(file.readAll());
+        QHttpHeaders headers;
+        if(rec.endsWith("js"))
+        headers.append("Content-Type","application/javascript");
+        re.setHeaders(headers);
+
+        return re;
+}
+);
+
     // 一、认证 (Auth) - API清单部分
     // =============================================
 
@@ -68,6 +128,7 @@ void Router::setupRoutes(QHttpServer &server) {
                      // 前端在 loginUser Thunk 中传递的是 password_hash，但这里应该是明文 password
                      // 我们假设前端已更正为传递 "password"
                      QString password = bodyJson.value("password").toString();
+
                      if (password.isEmpty() && bodyJson.contains("password_hash")) { // 兼容旧的前端错误
                          password = bodyJson.value("password_hash").toString();
                          qWarning() << "/api/auth/login: 前端可能错误地传递了 'password_hash' 而不是 'password'. 已尝试兼容。";
@@ -80,6 +141,7 @@ void Router::setupRoutes(QHttpServer &server) {
 
                      QJsonObject userInfoFromDb; // 用于接收数据库返回的用户基本信息
                      QString loginResultMessage;
+
                      bool loginSuccess = m_db->Logining(username, password, userInfoFromDb, loginResultMessage);
 
                      if (loginSuccess && loginResultMessage == "success") {
@@ -315,37 +377,72 @@ void Router::setupRoutes(QHttpServer &server) {
     // 三、学生与教师通用功能
     // =============================================
 
-    // 1. 查询空教室 (GET /api/classrooms/empty)
+    // server.cpp (or wherever your routes are defined)
     server.route("/api/classrooms/empty", QHttpServerRequest::Method::Get,
-                 [&](const QHttpServerRequest &request) -> QHttpServerResponse {
+                 [&](const QHttpServerRequest &request) -> QHttpServerResponse { // 确保 m_db 在捕获列表或可访问
                      qDebug() << "收到请求: GET /api/classrooms/empty";
                      QJsonObject userPayloadFromToken;
                      if (!JwtMiddleware::verifyToken(request, userPayloadFromToken)) {
                          return errorResponse("未授权查询空教室。", QHttpServerResponse::StatusCode::Unauthorized);
                      }
-
-                     RequestParser::EmptyClassroomQueryParams params(request.query());
+                     RequestParser::EmptyClassroomQueryParams params(request.query()); // 假设参数解析类
                      if (!params.valid) {
                          return errorResponse("查询参数无效: " + params.parseError, QHttpServerResponse::StatusCode::BadRequest);
                      }
 
-                     // SqlServer::getEmptyClassroom 的 room_type 参数对应前端的 equipment
-                     // 但前端的 EmptyClassroomQuery 没有直接的 room_type/equipment 字段，
-                     // 如果需要按设备类型筛选，前端API调用或 EmptyClassroomQueryParams 需要增加此参数。
-                     // 目前，我们传递空字符串给 room_type。
-                     QJsonArray availableClassrooms = m_db->getEmptyClassroom(
+                     // m_db->getEmptyClassroom 返回的是每日空教室的数组的数组。
+                     // 内部 QJsonObject 使用数据库列名，例如 "classroom_id", "capacity"。
+                     // "capacity" 应该已经是 JSON number 类型（来自 SqlServer::getEmptyClassroom）。
+                     QJsonArray availableClassroomsPerDay = m_db->getEmptyClassroom(
                          params.startDate,
                          params.endDate,
-                         params.building,    // building
+                         params.building,
                          "",                 // room_type (equipment) - 暂无此筛选参数从前端
                          params.sectionIds,
-                         params.minCapacity.isValid() ? params.minCapacity.toInt() : -1 // 如果无效，传-1表示不筛选容量
+                         params.minCapacity.isValid() ? params.minCapacity.toInt() : -1
                          );
-                     qInfo() << "空教室查询成功: " << params.startDate.toString() << "至" << params.endDate.toString()
+
+                     // --- 扁平化并去重 ---
+                     QJsonArray finalFlattenedUniqueClassrooms;
+                     // 使用 QSet 存储数据库中的 classroom_id (假设为整数) 来确保唯一性
+                     QSet<int> processedDbClassroomIds;
+
+                     for (const QJsonValue &dailyResultValue : availableClassroomsPerDay) {
+                         if (dailyResultValue.isArray()) {
+                             QJsonArray classroomsForOneDay = dailyResultValue.toArray();
+                             for (const QJsonValue &classroomValue : classroomsForOneDay) {
+                                 if (classroomValue.isObject()) {
+                                     QJsonObject classroomObj = classroomValue.toObject();
+                                     // 使用数据库的 "classroom_id" 键进行去重。
+                                     // classroom_id 应该是数字类型。
+                                     QJsonValue idValue = classroomObj.value("classroom_id");
+                                     if (idValue.isDouble()) { // QJsonValue 存储数字为 double
+                                         int dbClassroomId = idValue.toInt(); // 转换为 int
+                                         if (!processedDbClassroomIds.contains(dbClassroomId)) {
+                                             // 将原始的 classroomObj (包含数据库键名) 添加到结果列表。
+                                             // jsonResponse 后续会处理键名转换。
+                                             finalFlattenedUniqueClassrooms.append(classroomObj);
+                                             processedDbClassroomIds.insert(dbClassroomId);
+                                         }
+                                     } else {
+                                         qWarning() << "Classroom object found without a valid numeric 'classroom_id': " << classroomObj;
+                                         // 可以选择是否跳过此条目或如何处理
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                     // --- 扁平化并去重结束 ---
+
+                     qInfo() << "空教室查询成功 (待规范化): " << params.startDate.toString() << "至" << params.endDate.toString()
                              << ", 节次: " << params.sectionIds << ", 楼宇: " << params.building
                              << ", 最小容量: " << (params.minCapacity.isValid() ? params.minCapacity.toInt() : -1)
-                             << "。找到 " << availableClassrooms.count() << " 天的结果。";
-                     return jsonResponse(availableClassrooms);
+                             << "。找到 " << finalFlattenedUniqueClassrooms.count() << " 个唯一的空教室对象。";
+
+                     // 将包含数据库键名的扁平化、去重后的数组传递给 jsonResponse。
+                     // jsonResponse 负责将 "classroom_id" 转为 "classroomId", "room_number" 转为 "roomNumber",
+                     // 并确保 "capacity" 仍然是数字等。
+                     return jsonResponse(finalFlattenedUniqueClassrooms);
                  });
 
     // 2. 获取我的课表 (周视图) (GET /api/timetable/my)
@@ -385,7 +482,10 @@ void Router::setupRoutes(QHttpServer &server) {
                          for (const QJsonValueConstRef val : allTaughtSchedules) {
                              QJsonObject schedule = val.toObject();
                              QString weeksMask = schedule.value("weeks").toString();
+                             qDebug()<<schedule["weeks"];
                              if (params.week > 0 && params.week <= weeksMask.length() && weeksMask.at(params.week - 1) == '1') {
+                                 schedule["weeks"]=RequestParser::binaryToRangeString(schedule["weeks"].toString());
+                                 qDebug()<<schedule["weeks"];
                                  timetableData.append(schedule);
                              }
                          }
@@ -593,11 +693,11 @@ void Router::setupRoutes(QHttpServer &server) {
                      if (!RequestParser::parseJsonBody(request, bodyJson, parseErrorMsg)) {
                          return errorResponse("无效的请求体: " + parseErrorMsg, QHttpServerResponse::StatusCode::BadRequest);
                      }
-
-                     if (!bodyJson.contains("scheduleId") || !bodyJson.value("scheduleId").isDouble()) {
+                     qDebug()<<bodyJson["schedule_id"];
+                     if (!bodyJson.contains("schedule_id") || !bodyJson.value("schedule_id").isDouble()) {
                          return errorResponse("请求体中必须包含有效的 'scheduleId' (number)。", QHttpServerResponse::StatusCode::BadRequest);
                      }
-                     int scheduleId = bodyJson.value("scheduleId").toInt();
+                     int scheduleId = bodyJson.value("schedule_id").toInt();
                      int studentUserId = userPayloadFromToken.value("userId").toInt();
 
                      // SqlServer::enrollCourse 需要 student_db_id (学号) 和 semester_id
@@ -717,6 +817,12 @@ void Router::setupRoutes(QHttpServer &server) {
                      QJsonArray taughtSchedules = m_db->getTaughtSchedulesByTeacher(teacherDbId, semesterId);
                      qInfo() << "教师 " << teacherDbId << " (User ID: " << teacherUserId << ") 获取学期 " << semesterId
                              << " 的教学安排成功，数量：" << taughtSchedules.count();
+                     for( QJsonValueRef i:taughtSchedules) {
+                         auto tem=i.toObject();
+                         tem["weeks"]=RequestParser::binaryToRangeString(tem["weeks"].toString());
+                         i=tem;
+
+                     }
                      return jsonResponse(taughtSchedules);
                  });
 
@@ -773,6 +879,7 @@ void Router::setupRoutes(QHttpServer &server) {
                      if (!RequestParser::parseJsonBody(request, bodyJson, parseErrorMsg)) {
                          return errorResponse("无效的请求体: " + parseErrorMsg, QHttpServerResponse::StatusCode::BadRequest);
                      }
+                     bodyJson["proposed_weeks"]=RequestParser::mapInputToBitString( bodyJson["proposed_weeks"].toString());
 
                      // 校验 bodyJson 是否符合 ScheduleChangeRequestPayload 的结构
                      // 例如，检查必需字段：original_schedule_id, proposed_section_id, proposed_week_day, proposed_weeks, proposed_classroom_id, reason
@@ -911,7 +1018,7 @@ void Router::setupRoutes(QHttpServer &server) {
                      }
 
                      // 校验 AssignmentPayload 必需字段
-                     QStringList requiredAssignFields = {"title", "content", "courseId"}; // courseId 也是必需的，用于确定通知对象
+                     QStringList requiredAssignFields = {"title", "content", "course_id"}; // courseId 也是必需的，用于确定通知对象
                      for(const QString& field : requiredAssignFields) {
                          if(!bodyJson.contains(field)){
                              // courseId 在前端的 AssignmentPayload 中是可选的 (courseId?: number)
@@ -920,7 +1027,7 @@ void Router::setupRoutes(QHttpServer &server) {
                              return errorResponse(QString("请求体缺少必需字段: %1").arg(field), QHttpServerResponse::StatusCode::BadRequest);
                          }
                      }
-                     if(!bodyJson.value("courseId").isDouble() || bodyJson.value("courseId").toInt() <=0){
+                     if(!bodyJson.value("course_id").isDouble() || bodyJson.value("course_id").toInt() <=0){
                          return errorResponse("请求体中 courseId 必须是有效的正整数。", QHttpServerResponse::StatusCode::BadRequest);
                      }
 
@@ -1859,9 +1966,7 @@ void Router::setupRoutes(QHttpServer &server) {
                      // 例如 { "courseId_eq": 1, "teacherId_eq": "T001", "semesterId_eq": 2 }
                      // semesterId_eq 是必需的
 
-                     if (!params.filterSemesterId.isValid() || params.filterSemesterId.toInt() <= 0) {
-                         return errorResponse("必须提供有效的 'filterSemesterId' 查询参数。", QHttpServerResponse::StatusCode::BadRequest);
-                     }
+
 
                      QJsonObject filterForDb;
                      if (params.filterCourseId.isValid() && params.filterCourseId.toInt() > 0) {
@@ -1873,7 +1978,12 @@ void Router::setupRoutes(QHttpServer &server) {
                      if (params.filterClassroomId.isValid() && params.filterClassroomId.toInt() > 0) {
                          filterForDb["classroomId_eq"] = params.filterClassroomId.toInt();
                      }
-                     filterForDb["semesterId_eq"] = params.filterSemesterId.toInt(); // 必需
+                     // 检查 filterSemesterId 是否存在且有效，如果有效则添加筛选，否则不添加（表示查询所有学期）
+                     if (params.filterSemesterId.isValid() && params.filterSemesterId.toInt() > 0) {
+                         filterForDb["semesterId_eq"] = params.filterSemesterId.toInt();
+                     } else {
+                         qInfo() << "GET /api/admin/schedules: 未提供有效的学期ID筛选，将返回所有学期的排课。";
+                     }
 
                      if(params.filters.contains("weekDay_eq")){ // 从通用过滤器中获取
                          bool ok;
@@ -1933,11 +2043,14 @@ void Router::setupRoutes(QHttpServer &server) {
 
                      // ... (字段校验代码保持不变) ...
                      QStringList requiredFields = {"course_id", "teacher_id", "classroom_id", "section_id", "week_day", "weeks"};
+
+
                      for (const QString& field : requiredFields) {
                          if (!bodyJson.contains(field)) {
                              return errorResponse(QString("请求体缺少必需字段: %1").arg(field), QHttpServerResponse::StatusCode::BadRequest);
                          }
                          if((field.endsWith("_id") || field == "week_day") && !bodyJson.value(field).isDouble()){
+                             if(field=="teacher_id") continue;
                              return errorResponse(QString("字段 %1 必须是数字。").arg(field), QHttpServerResponse::StatusCode::BadRequest);
                          }
                      }
@@ -1945,7 +2058,9 @@ void Router::setupRoutes(QHttpServer &server) {
                      if(week_day_val < 1 || week_day_val > 7) {
                          return errorResponse("week_day 必须在 1 到 7 之间。", QHttpServerResponse::StatusCode::BadRequest);
                      }
+                     bodyJson["weeks"]=RequestParser::mapInputToBitString( bodyJson["weeks"].toString());
                      QString weeks_val = bodyJson.value("weeks").toString();
+                     qDebug()<<weeks_val;
                      if(weeks_val.isEmpty() || !weeks_val.contains(QRegularExpression("^[01]+$")) || weeks_val.length() > 50) {
                          return errorResponse("weeks 格式无效 (应为0和1组成的字符串，长度1-50)。", QHttpServerResponse::StatusCode::BadRequest);
                      }

@@ -2,7 +2,7 @@
 #include <QJsonDocument>
 #include <QDebug>
 #include <QStringList>
-
+#include <QJsonArray>
 namespace RequestParser {
 
 // --- 辅助函数实现 ---
@@ -221,6 +221,88 @@ TimetableQueryParams::TimetableQueryParams(const QUrlQuery& query) {
     }
 }
 
+// --- 递归转换 QJsonValue, QJsonObject, QJsonArray 的键 ---
+QJsonObject RequestParser::convertJsonObjectKeys(const QJsonObject& obj, std::function<QString(const QString&)> keyConverter) {
+    QJsonObject resultObj;
+    for (auto it = obj.constBegin(); it != obj.constEnd(); ++it) {
+        QString newKey = keyConverter(it.key());
+        resultObj[newKey] = convertJsonValueKeys(it.value(), keyConverter);
+    }
+    return resultObj;
+}
+
+QJsonArray RequestParser::convertJsonArrayKeys(const QJsonArray& arr, std::function<QString(const QString&)> keyConverter) {
+    QJsonArray resultArray;
+    for (const QJsonValue& val : arr) {
+        resultArray.append(convertJsonValueKeys(val, keyConverter));
+    }
+    return resultArray;
+}
+
+QJsonValue RequestParser::convertJsonValueKeys(const QJsonValue& value, std::function<QString(const QString&)> keyConverter) {
+    if (value.isObject()) {
+        return QJsonValue(convertJsonObjectKeys(value.toObject(), keyConverter));
+    } else if (value.isArray()) {
+        return QJsonValue(convertJsonArrayKeys(value.toArray(), keyConverter));
+    }
+    return value; // 基本类型直接返回
+}
+
+
+QString RequestParser::camelToSnake(const QString& s) {
+    QString result;
+    if (s.isEmpty()) return result;
+
+    for (int i = 0; i < s.length(); ++i) {
+        QChar c = s[i];
+        if (c.isUpper()) {
+            // Add underscore if:
+            // 1. Not the first character
+            // 2. AND (previous char was lowercase/digit OR (current char is not followed by another uppercase (to handle "URL" -> "url" not "u_r_l")))
+            // For "userId" -> "user_id", a simpler rule works: if previous char is lowercase, add underscore.
+            // Or, if this is an uppercase letter that starts an "acronym-like" part like "ID" in "userID".
+            if (i > 0) {
+                // If previous char is not uppercase, OR current char is uppercase AND next char is lowercase (e.g. UserID, N in Name)
+                QChar prev = s[i-1];
+                if (prev.isLower() || prev.isDigit() || (i + 1 < s.length() && s[i+1].isLower())) {
+                    result.append('_');
+                }
+            }
+            result.append(c.toLower());
+        } else {
+            result.append(c);
+        }
+    }
+    return result;
+}
+
+QString RequestParser::snakeToCamel(const QString& s) {
+    QString result;
+    if (s.isEmpty()) return result;
+
+    bool capitalizeNext = false;
+    for (QChar c : s) {
+        if (c == '_') {
+            capitalizeNext = true;
+        } else {
+            if (capitalizeNext) {
+                result.append(c.toUpper());
+                capitalizeNext = false;
+            } else {
+                result.append(c);
+            }
+        }
+    }
+    return result;
+}
+
+// --- 递归转换 QJsonValue, QJsonObject, QJsonArray 的键 ---
+
+
+
+
+
+
 
 // --- parseJsonBody 实现 ---
 bool parseJsonBody(const QHttpServerRequest &request, QJsonObject &bodyJson, QString &errorMessage) {
@@ -267,8 +349,139 @@ bool parseJsonBody(const QHttpServerRequest &request, QJsonObject &bodyJson, QSt
         return false;
     }
 
-    bodyJson = doc.object();
+    QJsonObject originalObject = doc.object();
+    bodyJson = convertJsonObjectKeys(originalObject, camelToSnake); // 从 camelCase 转为 snake_case
     return true;
 }
+
+QString mapInputToBitString(const QString &inputRangeString, int totalBits)
+{
+    if (totalBits <= 0) {
+        qWarning() << "Total bits must be positive. Returning empty string.";
+        return QString();
+    }
+
+    // 1. 初始化一个 QBitArray，所有位都为 false (0)
+    QBitArray bitArray(totalBits, false);
+
+    // 2. 分割输入字符串
+    // 首先去除所有空格，以防输入如 "1, 4-6, 11"
+    QString cleanedInput = inputRangeString;
+    cleanedInput.remove(' ');
+
+    QStringList parts = cleanedInput.split(',', Qt::SkipEmptyParts); // Qt::SkipEmptyParts 避免处理 "1,,2" 这种情况下的空部分
+
+    bool conversionOk = true; // 标志转换是否一直成功
+
+    for (const QString& part : parts) {
+        if (part.isEmpty()) continue; // 如果分割后有空部分，跳过
+
+        if (part.contains('-')) {
+            // 处理范围，例如 "4-6"
+            QStringList rangeLimits = part.split('-');
+            if (rangeLimits.size() == 2) {
+                bool okStart, okEnd;
+                int start = rangeLimits[0].toInt(&okStart);
+                int end = rangeLimits[1].toInt(&okEnd);
+
+                if (okStart && okEnd) {
+                    if (start < 1 || end > totalBits || start > end) {
+                        qWarning() << "Invalid range in part:" << part << ". Start/End out of bounds [1," << totalBits << "] or start > end.";
+                        conversionOk = false; // 标记一个解析错误
+                        continue; // 跳过这个无效的范围
+                    }
+                    // 将1-based索引转换为0-based索引并设置位
+                    for (int i = start; i <= end; ++i) {
+                        if (i - 1 < bitArray.size()) { // 再次检查，以防万一
+                            bitArray.setBit(i - 1, true);
+                        }
+                    }
+                } else {
+                    qWarning() << "Invalid number in range part:" << part;
+                    conversionOk = false;
+                }
+            } else {
+                qWarning() << "Invalid range format in part:" << part;
+                conversionOk = false;
+            }
+        } else {
+            // 处理单个数字，例如 "1" 或 "11"
+            bool ok;
+            int index = part.toInt(&ok);
+            if (ok) {
+                if (index < 1 || index > totalBits) {
+                    qWarning() << "Index out of bounds in part:" << part << ". Must be between [1," << totalBits << "].";
+                    conversionOk = false;
+                    continue; // 跳过这个无效的索引
+                }
+                // 将1-based索引转换为0-based索引并设置位
+                if (index - 1 < bitArray.size()) {
+                    bitArray.setBit(index - 1, true);
+                }
+            } else {
+                qWarning() << "Invalid number in part:" << part;
+                conversionOk = false;
+            }
+        }
+    }
+
+    // (可选) 如果在解析过程中有任何错误，可以决定是否返回空字符串或部分结果
+    // if (!conversionOk) {
+    //     qWarning() << "There were errors during parsing. The result might be incomplete or incorrect.";
+    //     // return QString(); // 或者继续返回部分结果
+    // }
+
+
+    // 3. 将 QBitArray 转换为 01 字符串
+    QString resultString;
+    resultString.reserve(totalBits); // 预分配空间以提高效率
+    for (int i = 0; i < bitArray.size(); ++i) {
+        resultString.append(bitArray.testBit(i) ? '1' : '0');
+    }
+
+    return resultString;
+}
+
+QString binaryToRangeString(const QString &binaryWeekString)
+{
+    QStringList resultSegments;
+    int n = binaryWeekString.length();
+
+    if (n == 0) {
+        return ""; // 空输入返回空字符串
+    }
+
+    int i = 0;
+    while (i < n) {
+        if (binaryWeekString[i] == '1') {
+            // 发现一个 '1'，这可能是一个单独的周，或者一个范围的开始
+            int startWeek = i + 1; // 周次从1开始计数
+            int j = i;
+
+            // 向后查找连续的 '1'
+            while (j < n && binaryWeekString[j] == '1') {
+                j++;
+            }
+
+            // 连续的 '1' 结束于索引 j-1，对应的周次是 (j-1)+1 = j
+            int endWeek = j; // 因为j是第一个0或者超出边界的位置, 所以(j-1)+1就是结束周
+
+            if (startWeek == endWeek) {
+                // 单独一周
+                resultSegments.append(QString::number(startWeek));
+            } else {
+                // 连续多周
+                resultSegments.append(QString::number(startWeek) + "-" + QString::number(endWeek));
+            }
+            i = j; // 从连续 '1' 序列的下一个位置继续扫描
+        } else {
+            // 当前是 '0'，直接跳过
+            i++;
+        }
+    }
+
+    return resultSegments.join(',');
+}
+
 
 } // namespace RequestParser
